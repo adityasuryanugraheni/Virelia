@@ -20,7 +20,7 @@ fun AppNav() {
     // 2. Gunakan NavHost (Hapus logika 'when' manual agar tidak tumpang tindih)
     NavHost(
         navController = navController,
-        startDestination = "login"
+        startDestination = "detail"
     ) {
 
         // --- RUTE LOGIN ---
@@ -59,12 +59,12 @@ fun AppNav() {
 
         //Explore
         composable("explore") {
-            ExploreScreen()
+            ExploreScreen(navController)
         }
 
         //Detail
         composable("detail") {
-            DetailScreen()
+            DetailScreen(navController)
         }
 
         // Profile

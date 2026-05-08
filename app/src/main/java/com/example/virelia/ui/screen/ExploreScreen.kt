@@ -1,5 +1,6 @@
 package com.example.virelia.ui.screen
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -16,9 +17,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 
 @Composable
-fun ExploreScreen() {
+fun ExploreScreen(navController: NavController) {
 
     // DATA DUMMY EXPLORE (Disesuaikan dengan pola Map di HomeScreen)
     val publicNotes = listOf(
@@ -101,6 +103,7 @@ fun ExploreScreen() {
             ) {
                 items(publicNotes) { note ->
                     ExploreNoteCard(
+                        navController = navController,
                         username = note["username"].toString(),
                         title = note["title"].toString(),
                         desc = note["desc"].toString(),
@@ -141,6 +144,7 @@ fun ExploreSearchBar() {
 
 @Composable
 fun ExploreNoteCard(
+    navController: NavController,
     username: String,
     title: String,
     desc: String,
@@ -148,7 +152,11 @@ fun ExploreNoteCard(
     comments: String
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                navController.navigate("detail")
+            },
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
