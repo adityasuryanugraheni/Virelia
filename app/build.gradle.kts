@@ -92,4 +92,7 @@ dependencies {
 
     // Test
     testImplementation("junit:junit:4.13.2")
+
+    //Icon
+    implementation("androidx.compose.material:material-icons-extended:1.6.0")
 }

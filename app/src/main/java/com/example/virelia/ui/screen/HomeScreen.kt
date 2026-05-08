@@ -16,6 +16,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.filled.ChatBubbleOutline
+import androidx.compose.material.icons.filled.FavoriteBorder
 
 @Composable
 fun HomeScreen() {
@@ -140,19 +142,29 @@ fun SearchBar() {
         modifier = Modifier.fillMaxWidth(),
 
         placeholder = {
-            Text("Search your thoughts...")
+            Text("Search your thoughts...",
+                color = Color.Gray
+                )
         },
+
+        textStyle = LocalTextStyle.current.copy(
+            color = Color.Black
+        ),
 
         leadingIcon = {
             Icon(
                 imageVector = Icons.Default.Search,
-                contentDescription = null
+                contentDescription = null,
+                tint = Color.Gray
             )
         },
 
         shape = RoundedCornerShape(18.dp),
 
         colors = OutlinedTextFieldDefaults.colors(
+            focusedTextColor = Color.Black,
+            unfocusedTextColor = Color.Black,
+
             focusedContainerColor = Color.White,
             unfocusedContainerColor = Color.White,
 
@@ -246,23 +258,46 @@ fun NoteCard(
             Spacer(modifier = Modifier.height(18.dp))
 
             // SHARE
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            if (isPublic) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
 
-                Icon(
-                    imageVector = Icons.Default.Share,
-                    contentDescription = null,
-                    tint = Color(0xFF1565FF)
-                )
+                    Icon(
+                        imageVector = Icons.Default.ChatBubbleOutline,
+                        contentDescription = null,
+                        tint = Color.Gray
+                    )
 
-                Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(16.dp))
 
-                Text(
-                    text = "Share",
-                    color = Color(0xFF1565FF),
-                    fontWeight = FontWeight.Medium
-                )
+                    Icon(
+                        imageVector = Icons.Default.FavoriteBorder,
+                        contentDescription = null,
+                        tint = Color.Red
+                    )
+                }
+            } else {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = null,
+                        tint = Color(0xFF1565FF)
+                    )
+
+                    Spacer(modifier = Modifier.width(6.dp))
+
+                    Text(
+                        text = "Share",
+                        color = Color(0xFF1565FF),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         }
     }
