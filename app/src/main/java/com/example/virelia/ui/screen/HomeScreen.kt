@@ -80,13 +80,13 @@ fun HomeScreen() {
             Spacer(modifier = Modifier.height(20.dp))
 
             // TITLE
-            Text(
-                text = "NoteShare",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold
-            )
+            //Text(
+                //text = "NoteShare",
+                //fontSize = 28.sp,
+                //fontWeight = FontWeight.Bold
+            //)
 
-            Spacer(modifier = Modifier.height(20.dp))
+            //Spacer(modifier = Modifier.height(20.dp))
 
             // SEARCH BAR
             SearchBar()
@@ -95,7 +95,7 @@ fun HomeScreen() {
 
             // HEADER
             Text(
-                text = "Your Notebook",
+                text = "Your Collection",
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold
             )
