@@ -8,6 +8,7 @@ import com.example.virelia.ui.screen.HomeScreen
 import com.example.virelia.ui.screen.LoginScreen
 import com.example.virelia.ui.screen.ProfileScreen
 import com.example.virelia.ui.screen.RegistrasiScreen
+import com.example.virelia.ui.screen.DetailScreen
 
 @Composable
 fun AppNav() {
@@ -17,7 +18,7 @@ fun AppNav() {
     // 2. Gunakan NavHost (Hapus logika 'when' manual agar tidak tumpang tindih)
     NavHost(
         navController = navController,
-        startDestination = "Profile"
+        startDestination = "profile"
     ) {
 
         // --- RUTE LOGIN ---
@@ -33,6 +34,10 @@ fun AppNav() {
                     }
                 }
             )
+        }
+
+        composable("detail") {
+            DetailScreen()
         }
 
         // --- RUTE REGISTRASI ---
