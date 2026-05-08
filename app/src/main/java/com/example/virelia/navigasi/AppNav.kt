@@ -1,76 +1,129 @@
 package com.example.virelia.navigasi
 
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import com.example.virelia.ui.screen.CreateScreen
-import com.example.virelia.ui.screen.HomeScreen
-import com.example.virelia.ui.screen.LoginScreen
-import com.example.virelia.ui.screen.ProfileScreen
-import com.example.virelia.ui.screen.RegistrasiScreen
-import com.example.virelia.ui.screen.DetailScreen
-import com.example.virelia.ui.screen.ExploreScreen
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.navigation.compose.*
+import com.example.virelia.ui.screen.*
+
+data class BottomNavItem(
+    val route: String,
+    val title: String,
+    val icon: ImageVector
+)
 
 @Composable
 fun AppNav() {
-    // 1. Inisialisasi Controller
+
     val navController = rememberNavController()
 
-    // 2. Gunakan NavHost (Hapus logika 'when' manual agar tidak tumpang tindih)
-    NavHost(
-        navController = navController,
-        startDestination = "detail"
-    ) {
+    val items = listOf(
+        BottomNavItem("home", "Home", Icons.Default.Home),
+        BottomNavItem("explore", "Explore", Icons.Default.Search),
+        BottomNavItem("profile", "Profile", Icons.Default.Person)
+    )
 
-        // --- RUTE LOGIN ---
-        composable("login") {
-            LoginScreen(
-                onSignUpClick = {
-                    navController.navigate("registrasi")
-                },
-                onLoginSuccess = {
-                    // Pindah ke home dan hapus history login agar tidak bisa balik lewat tombol back
-                    navController.navigate("home") {
-                        popUpTo("login") { inclusive = true }
+    Scaffold(
+
+        // BOTTOM NAVBAR
+        bottomBar = {
+
+            NavigationBar {
+
+                val currentRoute =
+                    navController.currentBackStackEntryAsState().value?.destination?.route
+
+                items.forEach { item ->
+
+                    NavigationBarItem(
+                        selected = currentRoute == item.route,
+
+                        onClick = {
+                            navController.navigate(item.route) {
+
+                                // Biar tidak numpuk halaman
+                                popUpTo(navController.graph.startDestinationId)
+
+                                launchSingleTop = true
+                            }
+                        },
+
+                        icon = {
+                            Icon(
+                                imageVector = item.icon,
+                                contentDescription = item.title
+                            )
+                        },
+
+                        label = {
+                            Text(item.title)
+                        },
+
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = Color.Blue,
+                            selectedTextColor = Color.Blue,
+                            indicatorColor = Color(0xFFE3F2FD),
+                            unselectedIconColor = Color.Gray,
+                            unselectedTextColor = Color.Gray
+                    )
+                    )
+                }
+            }
+        }
+
+    ) { paddingValues ->
+
+        NavHost(
+            navController = navController,
+            startDestination = "home",
+            modifier = Modifier.padding(paddingValues)
+        ) {
+
+            composable("home") {
+                HomeScreen()
+            }
+
+            composable("explore") {
+                ExploreScreen(navController)
+            }
+
+            composable("profile") {
+                ProfileScreen()
+            }
+
+            composable("create") {
+                CreateScreen()
+            }
+
+            composable("detail") {
+                DetailScreen(navController)
+            }
+
+            composable("login") {
+                LoginScreen(
+                    onSignUpClick = {
+                        navController.navigate("registrasi")
+                    },
+                    onLoginSuccess = {
+                        navController.navigate("home")
                     }
-                }
-            )
-        }
+                )
+            }
 
-        // --- RUTE REGISTRASI ---
-        composable("registrasi") {
-            RegistrasiScreen(
-                onLoginClick = {
-                    navController.navigate("login")
-                }
-            )
-        }
-
-        // --- RUTE HOME ---
-        composable("home") {
-            HomeScreen()
-        }
-
-        //Create
-        composable("create") {
-            CreateScreen()
-        }
-
-        //Explore
-        composable("explore") {
-            ExploreScreen(navController)
-        }
-
-        //Detail
-        composable("detail") {
-            DetailScreen(navController)
-        }
-
-        // Profile
-        composable("profile") {
-
-            ProfileScreen()
+            composable("registrasi") {
+                RegistrasiScreen(
+                    onLoginClick = {
+                        navController.navigate("login")
+                    }
+                )
+            }
         }
     }
 }
