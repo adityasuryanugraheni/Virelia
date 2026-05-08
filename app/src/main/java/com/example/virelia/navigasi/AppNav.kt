@@ -6,6 +6,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.virelia.ui.screen.HomeScreen
 import com.example.virelia.ui.screen.LoginScreen
+import com.example.virelia.ui.screen.ProfileScreen
 import com.example.virelia.ui.screen.RegistrasiScreen
 
 @Composable
@@ -16,7 +17,7 @@ fun AppNav() {
     // 2. Gunakan NavHost (Hapus logika 'when' manual agar tidak tumpang tindih)
     NavHost(
         navController = navController,
-        startDestination = "login" // Mulai dari login dulu
+        startDestination = "Profile"
     ) {
 
         // --- RUTE LOGIN ---
@@ -46,6 +47,12 @@ fun AppNav() {
         // --- RUTE HOME ---
         composable("home") {
             HomeScreen()
+        }
+
+        // Profile
+        composable("profile") {
+
+            ProfileScreen()
         }
     }
 }
