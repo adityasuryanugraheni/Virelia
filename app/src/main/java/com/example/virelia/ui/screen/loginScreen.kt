@@ -2,7 +2,7 @@ package com.example.virelia.ui.screen
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable // Pastikan ini ter-import
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -24,8 +24,10 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
 
 @Composable
-fun LoginScreen(onSignUpClick: () -> Unit) {
-
+fun LoginScreen(
+    onSignUpClick: () -> Unit,
+    onLoginSuccess: () -> Unit // 1. Tambahkan parameter ini
+) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     val focusManager = LocalFocusManager.current
@@ -36,15 +38,10 @@ fun LoginScreen(onSignUpClick: () -> Unit) {
             .verticalScroll(rememberScrollState())
             .imePadding()
             .pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = {
-                        focusManager.clearFocus()
-                    }
-                )
+                detectTapGestures(onTap = { focusManager.clearFocus() })
             }
             .background(Color.White)
             .padding(24.dp),
-
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -57,7 +54,7 @@ fun LoginScreen(onSignUpClick: () -> Unit) {
             text = "LOGIN",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF2979FF) // Menggunakan warna biru yang sama dengan tombol
+            color = Color(0xFF2979FF)
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -85,16 +82,12 @@ fun LoginScreen(onSignUpClick: () -> Unit) {
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = { Text("name@example.com") },
                     colors = OutlinedTextFieldDefaults.colors(
-
                         focusedTextColor = Color.Black,
                         unfocusedTextColor = Color.Black,
-
                         focusedBorderColor = Color.Black,
                         unfocusedBorderColor = Color.Black,
-
                         focusedContainerColor = Color.White,
                         unfocusedContainerColor = Color.White,
-
                         cursorColor = Color.Black
                     )
                 )
@@ -110,16 +103,12 @@ fun LoginScreen(onSignUpClick: () -> Unit) {
                     visualTransformation = PasswordVisualTransformation(),
                     placeholder = { Text("Enter your password") },
                     colors = OutlinedTextFieldDefaults.colors(
-
                         focusedTextColor = Color.Black,
                         unfocusedTextColor = Color.Black,
-
                         focusedBorderColor = Color.Black,
                         unfocusedBorderColor = Color.Black,
-
                         focusedContainerColor = Color.White,
                         unfocusedContainerColor = Color.White,
-
                         cursorColor = Color.Black
                     )
                 )
@@ -127,7 +116,10 @@ fun LoginScreen(onSignUpClick: () -> Unit) {
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Button(
-                    onClick = { /* Handle Login */ },
+                    onClick = {
+                        // 2. Panggil fungsi navigasi di sini
+                        onLoginSuccess()
+                    },
                     modifier = Modifier.fillMaxWidth().height(50.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2979FF))
                 ) {
@@ -144,10 +136,7 @@ fun LoginScreen(onSignUpClick: () -> Unit) {
                 text = "Sign up",
                 color = Color(0xFF2979FF),
                 fontWeight = FontWeight.Bold,
-                // Perbaikan di sini: modifier ditambahkan dengan benar
-                modifier = Modifier.clickable {
-                    onSignUpClick()
-                }
+                modifier = Modifier.clickable { onSignUpClick() }
             )
         }
     }
