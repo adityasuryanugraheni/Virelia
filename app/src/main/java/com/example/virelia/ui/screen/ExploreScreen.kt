@@ -6,8 +6,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Email // Ikon untuk komentar di Explore
+import androidx.compose.material.icons.filled.ChatBubbleOutline
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,7 +22,7 @@ import androidx.navigation.NavController
 @Composable
 fun ExploreScreen(navController: NavController) {
 
-    // DATA DUMMY EXPLORE (Disesuaikan dengan pola Map di HomeScreen)
+    // DATA DUMMY EXPLORE
     val publicNotes = listOf(
         mapOf(
             "username" to "@alex_r",
@@ -48,20 +48,7 @@ fun ExploreScreen(navController: NavController) {
     )
 
     Scaffold(
-        containerColor = Color(0xFFF5F5F7), // Pola warna background HomeScreen
-
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {},
-                containerColor = Color(0xFF1565FF) // Pola warna FAB HomeScreen
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    tint = Color.White
-                )
-            }
-        }
+        containerColor = Color(0xFFF5F5F7)
     ) { paddingValues ->
 
         Column(
@@ -73,17 +60,17 @@ fun ExploreScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // TITLE - Meniru gaya HomeScreen
+            // TITLE
             Text(
-                text = "Explore Notes",
-                fontSize = 28.sp,
+                text = "Explore Story",
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF1565FF)
             )
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // SEARCH BAR - Menggunakan pattern fungsi SearchBar kamu
+            // SEARCH BAR
             ExploreSearchBar()
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -91,17 +78,20 @@ fun ExploreScreen(navController: NavController) {
             // HEADER
             Text(
                 text = "Public Trends",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold
+                fontSize = 19.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
             )
 
             Spacer(modifier = Modifier.height(18.dp))
 
-            // NOTE LIST - Menggunakan pola LazyColumn HomeScreen
+            // NOTE LIST
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
+
                 items(publicNotes) { note ->
+
                     ExploreNoteCard(
                         navController = navController,
                         username = note["username"].toString(),
@@ -122,20 +112,47 @@ fun ExploreScreen(navController: NavController) {
 
 @Composable
 fun ExploreSearchBar() {
-    var text by remember { mutableStateOf("") }
+
+    var text by remember {
+        mutableStateOf("")
+    }
 
     OutlinedTextField(
         value = text,
-        onValueChange = { text = it },
-        modifier = Modifier.fillMaxWidth(),
-        placeholder = { Text("Search public thoughts...") },
-        leadingIcon = {
-            Icon(imageVector = Icons.Default.Search, contentDescription = null)
+        onValueChange = {
+            text = it
         },
+
+        modifier = Modifier.fillMaxWidth(),
+
+        placeholder = {
+            Text(
+                "Search public thoughts...",
+                color = Color.Gray
+            )
+        },
+
+        textStyle = LocalTextStyle.current.copy(
+            color = Color.Black
+        ),
+
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = null,
+                tint = Color.Gray
+            )
+        },
+
         shape = RoundedCornerShape(18.dp),
+
         colors = OutlinedTextFieldDefaults.colors(
+            focusedTextColor = Color.Black,
+            unfocusedTextColor = Color.Black,
+
             focusedContainerColor = Color.White,
             unfocusedContainerColor = Color.White,
+
             focusedBorderColor = Color.Transparent,
             unfocusedBorderColor = Color.Transparent
         )
@@ -151,30 +168,43 @@ fun ExploreNoteCard(
     time: String,
     comments: String
 ) {
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
                 navController.navigate("detail")
             },
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Column(modifier = Modifier.padding(18.dp)) {
 
-            // TOP ROW (Username & Time)
+        shape = RoundedCornerShape(24.dp),
+
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 4.dp
+        )
+    ) {
+
+        Column(
+            modifier = Modifier.padding(18.dp)
+        ) {
+
+            // TOP ROW
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+
                 Text(
                     text = username,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF1565FF),
                     fontSize = 14.sp
                 )
+
                 Text(
                     text = time,
                     fontSize = 12.sp,
@@ -188,7 +218,8 @@ fun ExploreNoteCard(
             Text(
                 text = title,
                 fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -203,20 +234,41 @@ fun ExploreNoteCard(
 
             Spacer(modifier = Modifier.height(18.dp))
 
-            // FOOTER (Comments) - Mengikuti pola Row Share di HomeScreen
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            // FOOTER COMMENT & LIKE
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
                 Icon(
-                    imageVector = Icons.Default.Email,
+                    imageVector = Icons.Default.ChatBubbleOutline,
                     contentDescription = null,
-                    tint = Color(0xFF1565FF),
-                    modifier = Modifier.size(18.dp)
+                    tint = Color.Gray
                 )
+
                 Spacer(modifier = Modifier.width(6.dp))
+
                 Text(
-                    text = "$comments Comments",
-                    color = Color(0xFF1565FF),
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 14.sp
+                    text = comments,
+                    color = Color.Gray,
+                    fontSize = 13.sp
+                )
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Icon(
+                    imageVector = Icons.Default.FavoriteBorder,
+                    contentDescription = null,
+                    tint = Color.Red
+                )
+
+                Spacer(modifier = Modifier.width(6.dp))
+
+                Text(
+                    text = "Like",
+                    color = Color.Red,
+                    fontSize = 13.sp
                 )
             }
         }
