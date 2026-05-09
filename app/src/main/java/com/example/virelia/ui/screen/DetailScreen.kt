@@ -101,7 +101,8 @@ fun DetailScreen(navController: NavController) {
 
                     Text(
                         text = "892 Likes",
-                        color = Color.Gray
+                        color = Color.Black
+
                     )
                 }
 
