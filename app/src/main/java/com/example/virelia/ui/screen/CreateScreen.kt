@@ -29,6 +29,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.platform.LocalContext
+import com.example.virelia.Database.DatabaseProvider
+import com.example.virelia.Database.NoteEntity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,6 +53,8 @@ fun CreateScreen(
     var selectedImageUri by remember {
         mutableStateOf<Uri?>(null)
     }
+
+    val context = LocalContext.current
 
     // IMAGE PICKER
     val imageLauncher = rememberLauncherForActivityResult(
@@ -90,7 +98,19 @@ fun CreateScreen(
                     Button(
                         onClick = {
 
-                            // SAVE NOTE
+                            val db = DatabaseProvider.getDatabase(context)
+
+                            CoroutineScope(Dispatchers.IO).launch {
+
+                                db.noteDao().insertNote(
+
+                                    NoteEntity(
+                                        title = title,
+                                        desc = content,
+                                        time = "Today"
+                                    )
+                                )
+                            }
                         },
 
                         shape = RoundedCornerShape(12.dp),
@@ -287,3 +307,4 @@ fun CreateScreen(
         }
     }
 }
+

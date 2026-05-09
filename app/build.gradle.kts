@@ -44,10 +44,9 @@ android {
 dependencies {
 
     // Firebase
-    implementation(platform("com.google.firebase:firebase-bom:34.12.0"))
-    implementation("com.google.firebase:firebase-auth-ktx")
-    implementation("com.google.firebase:firebase-firestore-ktx")
-    implementation("com.google.firebase:firebase-storage-ktx")
+    implementation("com.google.firebase:firebase-auth-ktx:23.1.0")
+    implementation("com.google.firebase:firebase-firestore-ktx:25.1.1")
+    implementation("com.google.firebase:firebase-storage-ktx:21.0.1")
 
     // Room
     val room_version = "2.7.0"
