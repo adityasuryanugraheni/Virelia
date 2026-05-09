@@ -5,13 +5,28 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.navigation.compose.*
-import com.example.virelia.ui.screen.*
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import com.example.virelia.ui.screen.CreateScreen
+import com.example.virelia.ui.screen.DetailScreen
+import com.example.virelia.ui.screen.ExploreScreen
+import com.example.virelia.ui.screen.HomeScreen
+import com.example.virelia.ui.screen.LoginScreen
+import com.example.virelia.ui.screen.ProfileScreen
+import com.example.virelia.ui.screen.RegistrasiScreen
 
 data class BottomNavItem(
     val route: String,
@@ -25,55 +40,92 @@ fun AppNav() {
     val navController = rememberNavController()
 
     val items = listOf(
-        BottomNavItem("home", "Home", Icons.Default.Home),
-        BottomNavItem("explore", "Explore", Icons.Default.Search),
-        BottomNavItem("profile", "Profile", Icons.Default.Person)
+
+        BottomNavItem(
+            route = "home",
+            title = "Home",
+            icon = Icons.Default.Home
+        ),
+
+        BottomNavItem(
+            route = "explore",
+            title = "Explore",
+            icon = Icons.Default.Search
+        ),
+
+        BottomNavItem(
+            route = "profile",
+            title = "Profile",
+            icon = Icons.Default.Person
+        )
     )
+
+    val navBackStackEntry by
+    navController.currentBackStackEntryAsState()
+
+    val currentRoute =
+        navBackStackEntry?.destination?.route
 
     Scaffold(
 
-        // BOTTOM NAVBAR
         bottomBar = {
 
-            NavigationBar {
+            // Navbar tidak muncul di login & registrasi
+            if (
+                currentRoute != "login" &&
+                currentRoute != "registrasi"
+            ) {
 
-                val currentRoute =
-                    navController.currentBackStackEntryAsState().value?.destination?.route
+                NavigationBar {
 
-                items.forEach { item ->
+                    items.forEach { item ->
 
-                    NavigationBarItem(
-                        selected = currentRoute == item.route,
+                        NavigationBarItem(
 
-                        onClick = {
-                            navController.navigate(item.route) {
+                            selected =
+                                currentRoute == item.route,
 
-                                // Biar tidak numpuk halaman
-                                popUpTo(navController.graph.startDestinationId)
+                            onClick = {
 
-                                launchSingleTop = true
-                            }
-                        },
+                                navController.navigate(item.route) {
 
-                        icon = {
-                            Icon(
-                                imageVector = item.icon,
-                                contentDescription = item.title
-                            )
-                        },
+                                    popUpTo(
+                                        navController.graph.startDestinationId
+                                    )
 
-                        label = {
-                            Text(item.title)
-                        },
+                                    launchSingleTop = true
+                                }
+                            },
 
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = Color.Blue,
-                            selectedTextColor = Color.Blue,
-                            indicatorColor = Color(0xFFE3F2FD),
-                            unselectedIconColor = Color.Gray,
-                            unselectedTextColor = Color.Gray
-                    )
-                    )
+                            icon = {
+
+                                Icon(
+                                    imageVector = item.icon,
+                                    contentDescription = item.title
+                                )
+                            },
+
+                            label = {
+
+                                Text(item.title)
+                            },
+
+                            colors =
+                                NavigationBarItemDefaults.colors(
+
+                                    selectedIconColor = Color.Blue,
+
+                                    selectedTextColor = Color.Blue,
+
+                                    indicatorColor =
+                                        Color(0xFFE3F2FD),
+
+                                    unselectedIconColor = Color.Gray,
+
+                                    unselectedTextColor = Color.Gray
+                                )
+                        )
+                    }
                 }
             }
         }
@@ -81,48 +133,88 @@ fun AppNav() {
     ) { paddingValues ->
 
         NavHost(
+
             navController = navController,
-            startDestination = "home",
+
+            // Pertama buka aplikasi langsung ke login
+            startDestination = "login",
+
             modifier = Modifier.padding(paddingValues)
+
         ) {
 
+            // LOGIN
+            composable("login") {
+
+                LoginScreen(
+
+                    onSignUpClick = {
+
+                        navController.navigate("registrasi")
+                    },
+
+                    onLoginSuccess = {
+
+                        navController.navigate("home") {
+
+                            popUpTo("login") {
+                                inclusive = true
+                            }
+                        }
+                    }
+                )
+            }
+
+            // REGISTRASI
+            composable("registrasi") {
+
+                RegistrasiScreen(
+
+                    onLoginClick = {
+
+                        navController.navigate("login")
+                    },
+
+                    onRegisterSuccess = {
+
+                        navController.navigate("home") {
+
+                            popUpTo("login") {
+                                inclusive = true
+                            }
+                        }
+                    }
+                )
+            }
+
+            // HOME
             composable("home") {
+
                 HomeScreen()
             }
 
+            // EXPLORE
             composable("explore") {
+
                 ExploreScreen(navController)
             }
 
+            // PROFILE
             composable("profile") {
+
                 ProfileScreen()
             }
 
+            // CREATE
             composable("create") {
+
                 CreateScreen()
             }
 
+            // DETAIL
             composable("detail") {
+
                 DetailScreen(navController)
-            }
-
-            composable("login") {
-                LoginScreen(
-                    onSignUpClick = {
-                        navController.navigate("registrasi")
-                    },
-                    onLoginSuccess = {
-                        navController.navigate("home")
-                    }
-                )
-            }
-
-            composable("registrasi") {
-                RegistrasiScreen(
-                    onLoginClick = {
-                        navController.navigate("login")
-                    }
-                )
             }
         }
     }

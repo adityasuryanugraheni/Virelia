@@ -18,13 +18,25 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.virelia.R
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
-fun RegistrasiScreen(onLoginClick: () -> Unit) {
+fun RegistrasiScreen(
+    onLoginClick: () -> Unit,
+    onRegisterSuccess: () -> Unit
+) {
+
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
+
+    val auth = FirebaseAuth.getInstance()
+    val db = FirebaseFirestore.getInstance()
 
     val textFieldColors = OutlinedTextFieldDefaults.colors(
         unfocusedContainerColor = Color.White,
@@ -38,16 +50,15 @@ fun RegistrasiScreen(onLoginClick: () -> Unit) {
             .padding(horizontal = 24.dp)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
-        // Menggunakan Top agar tidak terpotong di HP layar pendek
         verticalArrangement = Arrangement.Top
     ) {
-        // Jarak dari status bar atas
+
         Spacer(modifier = Modifier.height(40.dp))
 
         Image(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = "Logo",
-            modifier = Modifier.size(80.dp) // Sedikit dikecilkan agar hemat ruang
+            modifier = Modifier.size(80.dp)
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -73,10 +84,17 @@ fun RegistrasiScreen(onLoginClick: () -> Unit) {
             colors = CardDefaults.cardColors(containerColor = Color.White),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
+
             Column(modifier = Modifier.padding(16.dp)) {
 
-                Text("Full Name", fontWeight = FontWeight.Medium, fontSize = 13.sp)
+                Text(
+                    "Full Name",
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 13.sp
+                )
+
                 Spacer(modifier = Modifier.height(4.dp))
+
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
@@ -88,54 +106,188 @@ fun RegistrasiScreen(onLoginClick: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Text("Email", fontWeight = FontWeight.Medium, fontSize = 13.sp)
+                Text(
+                    "Email",
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 13.sp
+                )
+
                 Spacer(modifier = Modifier.height(4.dp))
+
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("name@example.com", fontSize = 14.sp) },
+                    placeholder = {
+                        Text(
+                            "name@example.com",
+                            fontSize = 14.sp
+                        )
+                    },
                     colors = textFieldColors,
                     singleLine = true
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Text("Password", fontWeight = FontWeight.Medium, fontSize = 13.sp)
+                Text(
+                    "Password",
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 13.sp
+                )
+
                 Spacer(modifier = Modifier.height(4.dp))
+
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
                     modifier = Modifier.fillMaxWidth(),
                     visualTransformation = PasswordVisualTransformation(),
-                    placeholder = { Text("Create password", fontSize = 14.sp) },
+                    placeholder = {
+                        Text(
+                            "Create password",
+                            fontSize = 14.sp
+                        )
+                    },
                     colors = textFieldColors,
                     singleLine = true
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Text("Confirm Password", fontWeight = FontWeight.Medium, fontSize = 13.sp)
+                Text(
+                    "Confirm Password",
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 13.sp
+                )
+
                 Spacer(modifier = Modifier.height(4.dp))
+
                 OutlinedTextField(
                     value = confirmPassword,
                     onValueChange = { confirmPassword = it },
                     modifier = Modifier.fillMaxWidth(),
                     visualTransformation = PasswordVisualTransformation(),
-                    placeholder = { Text("Repeat password", fontSize = 14.sp) },
+                    placeholder = {
+                        Text(
+                            "Repeat password",
+                            fontSize = 14.sp
+                        )
+                    },
                     colors = textFieldColors,
                     singleLine = true
                 )
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (errorMessage.isNotEmpty()) {
+
+                    Text(
+                        text = errorMessage,
+                        color = Color.Red,
+                        fontSize = 13.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
 
                 Button(
-                    onClick = { /* Handle Sign Up */ },
-                    modifier = Modifier.fillMaxWidth().height(48.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2979FF)),
-                    shape = RoundedCornerShape(10.dp)
+                    onClick = {
+
+                        errorMessage = ""
+
+                        if (
+                            name.isEmpty() ||
+                            email.isEmpty() ||
+                            password.isEmpty() ||
+                            confirmPassword.isEmpty()
+                        ) {
+
+                            errorMessage = "Semua field harus diisi"
+                            return@Button
+                        }
+
+                        if (password != confirmPassword) {
+
+                            errorMessage = "Password tidak sama"
+                            return@Button
+                        }
+
+                        if (password.length < 6) {
+
+                            errorMessage =
+                                "Password minimal 6 karakter"
+                            return@Button
+                        }
+
+                        isLoading = true
+
+                        auth.createUserWithEmailAndPassword(
+                            email,
+                            password
+                        )
+                            .addOnSuccessListener {
+
+                                val uid =
+                                    auth.currentUser?.uid
+
+                                val user = hashMapOf(
+                                    "username" to name,
+                                    "email" to email,
+                                    "profileImage" to ""
+                                )
+
+                                db.collection("users")
+                                    .document(uid!!)
+                                    .set(user)
+                                    .addOnSuccessListener {
+
+                                        isLoading = false
+
+                                        onRegisterSuccess()
+                                    }
+                                    .addOnFailureListener {
+
+                                        isLoading = false
+
+                                        errorMessage =
+                                            it.message.toString()
+                                    }
+                            }
+                            .addOnFailureListener {
+
+                                isLoading = false
+
+                                errorMessage =
+                                    it.message.toString()
+                            }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF2979FF)
+                    ),
+                    shape = RoundedCornerShape(10.dp),
+                    enabled = !isLoading
                 ) {
-                    Text("Sign Up", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+
+                    if (isLoading) {
+
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+
+                    } else {
+
+                        Text(
+                            "Sign Up",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }
@@ -143,15 +295,22 @@ fun RegistrasiScreen(onLoginClick: () -> Unit) {
         Spacer(modifier = Modifier.height(24.dp))
 
         Row(
-            modifier = Modifier.padding(bottom = 32.dp) // Memberi jarak aman di bagian paling bawah
+            modifier = Modifier.padding(bottom = 32.dp)
         ) {
-            Text("Already have an account? ", fontSize = 14.sp)
+
+            Text(
+                "Already have an account? ",
+                fontSize = 14.sp
+            )
+
             Text(
                 text = "Log In",
                 color = Color(0xFF2979FF),
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp,
-                modifier = Modifier.clickable { onLoginClick() }
+                modifier = Modifier.clickable {
+                    onLoginClick()
+                }
             )
         }
     }
