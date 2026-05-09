@@ -68,7 +68,7 @@ fun ExploreScreen(navController: NavController) {
                 color = Color(0xFF1565FF)
             )
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // SEARCH BAR
             ExploreSearchBar()
