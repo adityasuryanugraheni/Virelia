@@ -12,5 +12,6 @@ data class NoteEntity(
     val desc: String,
     val time: String,
     // status apakah sudah di share
-    val isShared: Boolean = false
+    val isShared: Boolean = false,
+    val userId: String = ""
 )

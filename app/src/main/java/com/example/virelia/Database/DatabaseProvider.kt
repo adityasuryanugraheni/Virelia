@@ -12,10 +12,11 @@ object DatabaseProvider {
         return INSTANCE ?: synchronized(this) {
 
             val instance = Room.databaseBuilder(
-                context.applicationContext,
+                context,
                 NoteDatabase::class.java,
-                "virelia_db"
-            ).build()
+                "note_db"
+            ).fallbackToDestructiveMigration()
+                .build()
 
             INSTANCE = instance
 

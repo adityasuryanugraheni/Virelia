@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun HomeScreen(
@@ -42,9 +43,38 @@ fun HomeScreen(
 
     val db = DatabaseProvider.getDatabase(context)
 
-    val notes by db.noteDao()
-        .getAllNotes()
-        .collectAsState(initial = emptyList())
+    val userId = FirebaseAuth
+        .getInstance()
+        .currentUser
+        ?.uid ?: ""
+
+    var notes by remember {
+        mutableStateOf<List<NoteEntity>>(emptyList())
+    }
+    LaunchedEffect(Unit) {
+
+        val userId =
+            FirebaseAuth.getInstance().currentUser?.uid ?: ""
+
+        FirebaseFirestore.getInstance()
+            .collection("stories")
+            .whereEqualTo("userId", userId)
+            .get()
+            .addOnSuccessListener { result ->
+
+                val data = result.documents.map {
+
+                    NoteEntity(
+
+                        title = it.getString("title") ?: "",
+                        desc = it.getString("desc") ?: "",
+                        time = it.getString("time") ?: ""
+                    )
+                }
+
+                notes = data
+            }
+    }
 
     Scaffold(
 

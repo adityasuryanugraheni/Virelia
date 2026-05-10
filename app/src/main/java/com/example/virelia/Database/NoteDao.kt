@@ -24,4 +24,7 @@ interface NoteDao {
 
     @Query("SELECT * FROM notes WHERE id = :id")
     suspend fun getNoteById(id: Int): NoteEntity?
+
+    @Query("SELECT * FROM notes WHERE userId = :userId")
+    fun getNotesByUser(userId: String): Flow<List<NoteEntity>>
 }

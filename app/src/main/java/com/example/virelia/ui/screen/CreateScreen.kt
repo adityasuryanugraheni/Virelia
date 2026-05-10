@@ -35,6 +35,8 @@ import com.example.virelia.Database.NoteEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -131,7 +133,10 @@ fun CreateScreen(
 
                                 if (note == null) {
 
-                                    // CREATE BARU
+                                    val userId =
+                                        FirebaseAuth.getInstance().currentUser?.uid ?: ""
+
+                                    // ROOM LOCAL
                                     db.noteDao().insertNote(
 
                                         NoteEntity(
@@ -141,6 +146,18 @@ fun CreateScreen(
                                         )
                                     )
 
+                                    // FIRESTORE ONLINE
+                                    val noteData = hashMapOf(
+
+                                        "title" to title,
+                                        "desc" to content,
+                                        "time" to "Today",
+                                        "userId" to userId
+                                    )
+
+                                    FirebaseFirestore.getInstance()
+                                        .collection("stories")
+                                        .add(noteData)
                                 }else {
 
                                     // EDIT NOTE
