@@ -1,80 +1,52 @@
 package com.example.virelia.ui.screen
 
+import android.widget.Toast
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ChatBubbleOutline
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.material.icons.filled.ChatBubbleOutline
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.ui.platform.LocalContext
 import com.example.virelia.Database.DatabaseProvider
 import com.example.virelia.Database.NoteEntity
-import com.google.firebase.firestore.FirebaseFirestore
-import android.widget.Toast
 import com.example.virelia.utils.isInternetAvailable
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import androidx.compose.runtime.collectAsState
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.ui.input.pointer.pointerInput
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun HomeScreen(
     onAddClick: () -> Unit,
-    onEditClick: (NoteEntity) -> Unit) {
-    val context = LocalContext.current
+    onEditClick: (NoteEntity) -> Unit
+) {
 
+    val context = LocalContext.current
     val db = DatabaseProvider.getDatabase(context)
 
-    val userId = FirebaseAuth
-        .getInstance()
-        .currentUser
-        ?.uid ?: ""
-
-    var notes by remember {
-        mutableStateOf<List<NoteEntity>>(emptyList())
-    }
-    LaunchedEffect(Unit) {
-
-        val userId =
-            FirebaseAuth.getInstance().currentUser?.uid ?: ""
-
-        FirebaseFirestore.getInstance()
-            .collection("stories")
-            .whereEqualTo("userId", userId)
-            .get()
-            .addOnSuccessListener { result ->
-
-                val data = result.documents.map {
-
-                    NoteEntity(
-
-                        title = it.getString("title") ?: "",
-                        desc = it.getString("desc") ?: "",
-                        time = it.getString("time") ?: ""
-                    )
-                }
-
-                notes = data
-            }
-    }
+    // AMBIL DARI ROOM
+    val notes by db.noteDao()
+        .getAllNotes()
+        .collectAsState(initial = emptyList())
 
     Scaffold(
 
@@ -106,21 +78,10 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // TITLE
-            //Text(
-                //text = "NoteShare",
-                //fontSize = 28.sp,
-                //fontWeight = FontWeight.Bold
-            //)
-
-            //Spacer(modifier = Modifier.height(20.dp))
-
-            // SEARCH BAR
             SearchBar()
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // HEADER
             Text(
                 text = "Your Collection",
                 fontSize = 22.sp,
@@ -129,7 +90,6 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(18.dp))
 
-            // NOTE LIST
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
@@ -139,14 +99,14 @@ fun HomeScreen(
                     NoteCard(
                         note = note,
 
-                        onEditClick = { note ->
+                        onEditClick = {
                             onEditClick(note)
                         }
                     )
                 }
 
                 item {
-                    Spacer(modifier = Modifier.height(90.dp))
+                    Spacer(modifier = Modifier.height(100.dp))
                 }
             }
         }
@@ -162,6 +122,7 @@ fun SearchBar() {
 
     OutlinedTextField(
         value = text,
+
         onValueChange = {
             text = it
         },
@@ -169,28 +130,23 @@ fun SearchBar() {
         modifier = Modifier.fillMaxWidth(),
 
         placeholder = {
-            Text("Search your thoughts...",
+            Text(
+                text = "Search your thoughts...",
                 color = Color.Gray
-                )
+            )
         },
 
-        textStyle = LocalTextStyle.current.copy(
-            color = Color.Black
-        ),
-
         leadingIcon = {
+
             Icon(
                 imageVector = Icons.Default.Search,
-                contentDescription = null,
-                tint = Color.Gray
+                contentDescription = null
             )
         },
 
         shape = RoundedCornerShape(18.dp),
 
         colors = OutlinedTextFieldDefaults.colors(
-            focusedTextColor = Color.Black,
-            unfocusedTextColor = Color.Black,
 
             focusedContainerColor = Color.White,
             unfocusedContainerColor = Color.White,
@@ -206,7 +162,9 @@ fun NoteCard(
     note: NoteEntity,
     onEditClick: (NoteEntity) -> Unit
 ) {
+
     val context = LocalContext.current
+    val db = DatabaseProvider.getDatabase(context)
 
     var showMenu by remember {
         mutableStateOf(false)
@@ -217,6 +175,7 @@ fun NoteCard(
     }
 
     Card(
+
         modifier = Modifier
             .fillMaxWidth()
             .pointerInput(Unit) {
@@ -234,10 +193,6 @@ fun NoteCard(
 
         colors = CardDefaults.cardColors(
             containerColor = Color.White
-        ),
-
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 4.dp
         )
     ) {
 
@@ -245,7 +200,6 @@ fun NoteCard(
             modifier = Modifier.padding(18.dp)
         ) {
 
-            // TOP ROW
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -262,6 +216,7 @@ fun NoteCard(
                 ) {
 
                     Text(
+
                         text =
                             if (note.isShared)
                                 "Public"
@@ -271,22 +226,19 @@ fun NoteCard(
                         modifier = Modifier.padding(
                             horizontal = 12.dp,
                             vertical = 5.dp
-                        ),
-
-                        fontSize = 12.sp
+                        )
                     )
                 }
 
                 Text(
                     text = note.time,
-                    fontSize = 12.sp,
-                    color = Color.Gray
+                    color = Color.Gray,
+                    fontSize = 12.sp
                 )
             }
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // TITLE
             Text(
                 text = note.title,
                 fontSize = 20.sp,
@@ -295,50 +247,21 @@ fun NoteCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // DESCRIPTION
             Text(
                 text = note.desc,
-                fontSize = 14.sp,
-                lineHeight = 20.sp,
                 color = Color.Gray
             )
 
             Spacer(modifier = Modifier.height(18.dp))
 
             // SHARE
-            if (note.isShared) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-
-                    Icon(
-                        imageVector = Icons.Default.ChatBubbleOutline,
-                        contentDescription = null,
-                        tint = Color.Gray
-                    )
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    Icon(
-                        imageVector = Icons.Default.FavoriteBorder,
-                        contentDescription = null,
-                        tint = Color.Red
-                    )
-                }
-            } else {
-                val context = LocalContext.current
+            if (!note.isShared) {
 
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
+
                     modifier = Modifier.clickable {
 
                         if (isInternetAvailable(context)) {
-
-                            val firestore = FirebaseFirestore.getInstance()
-
-                            val db = DatabaseProvider.getDatabase(context)
 
                             val noteData = hashMapOf(
 
@@ -347,7 +270,8 @@ fun NoteCard(
                                 "time" to note.time
                             )
 
-                            firestore.collection("stories")
+                            FirebaseFirestore.getInstance()
+                                .collection("stories")
                                 .add(noteData)
                                 .addOnSuccessListener {
 
@@ -373,8 +297,10 @@ fun NoteCard(
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
-                    }
-                ){
+                    },
+
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
 
                     Icon(
                         imageVector = Icons.Default.Share,
@@ -386,14 +312,35 @@ fun NoteCard(
 
                     Text(
                         text = "Share",
-                        color = Color(0xFF1565FF),
-                        fontWeight = FontWeight.Medium
+                        color = Color(0xFF1565FF)
+                    )
+                }
+
+            } else {
+
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Default.ChatBubbleOutline,
+                        contentDescription = null
+                    )
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Icon(
+                        imageVector = Icons.Default.FavoriteBorder,
+                        contentDescription = null,
+                        tint = Color.Red
                     )
                 }
             }
         }
 
         DropdownMenu(
+
             expanded = showMenu,
 
             onDismissRequest = {
@@ -430,6 +377,8 @@ fun NoteCard(
             )
         }
     }
+
+    // DIALOG DELETE
     if (showDeleteDialog) {
 
         AlertDialog(
@@ -443,7 +392,7 @@ fun NoteCard(
             },
 
             text = {
-                Text("Are you sure to delete this story?")
+                Text("Are you sure?")
             },
 
             confirmButton = {
@@ -454,11 +403,19 @@ fun NoteCard(
 
                         showDeleteDialog = false
 
-                        val db = DatabaseProvider.getDatabase(context)
-
                         CoroutineScope(Dispatchers.IO).launch {
 
+                            // HAPUS ROOM
                             db.noteDao().deleteNote(note)
+
+                            // HAPUS FIRESTORE
+                            if (note.firestoreId.isNotEmpty()) {
+
+                                FirebaseFirestore.getInstance()
+                                    .collection("stories")
+                                    .document(note.firestoreId)
+                                    .delete()
+                            }
                         }
                     }
                 ) {
@@ -475,6 +432,7 @@ fun NoteCard(
                 TextButton(
 
                     onClick = {
+
                         showDeleteDialog = false
                     }
                 ) {

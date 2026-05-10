@@ -23,20 +23,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.ui.platform.LocalContext
 import com.example.virelia.Database.DatabaseProvider
 import com.example.virelia.Database.NoteEntity
+import com.example.virelia.utils.isInternetAvailable
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,6 +44,7 @@ fun CreateScreen(
     noteId: Int? = null,
     onBackClick: () -> Unit = {}
 ) {
+
     val context = LocalContext.current
     val db = DatabaseProvider.getDatabase(context)
 
@@ -51,6 +52,7 @@ fun CreateScreen(
         mutableStateOf<NoteEntity?>(null)
     }
 
+    // AMBIL NOTE UNTUK EDIT
     LaunchedEffect(noteId) {
 
         if (noteId != null && noteId != -1) {
@@ -72,6 +74,7 @@ fun CreateScreen(
         mutableStateOf("")
     }
 
+    // SET DATA KE FIELD
     LaunchedEffect(note) {
 
         note?.let {
@@ -104,7 +107,12 @@ fun CreateScreen(
                 title = {
 
                     Text(
-                        text = "New Story",
+                        text =
+                            if (note == null)
+                                "New Story"
+                            else
+                                "Edit Story",
+
                         fontWeight = FontWeight.SemiBold
                     )
                 },
@@ -125,50 +133,93 @@ fun CreateScreen(
                 actions = {
 
                     TextButton(
-                        onClick = {
 
-                            val db = DatabaseProvider.getDatabase(context)
+                        onClick = {
 
                             CoroutineScope(Dispatchers.IO).launch {
 
+                                val userId =
+                                    FirebaseAuth
+                                        .getInstance()
+                                        .currentUser
+                                        ?.uid ?: ""
+
+                                // CREATE
                                 if (note == null) {
 
-                                    val userId =
-                                        FirebaseAuth.getInstance().currentUser?.uid ?: ""
+                                    val firestoreId =
+                                        FirebaseFirestore
+                                            .getInstance()
+                                            .collection("stories")
+                                            .document()
+                                            .id
 
-                                    // ROOM LOCAL
-                                    db.noteDao().insertNote(
+                                    val newNote = NoteEntity(
 
-                                        NoteEntity(
-                                            title = title,
-                                            desc = content,
-                                            time = "Today"
+                                        title = title,
+                                        desc = content,
+                                        time = "Today",
+
+                                        userId = userId,
+
+                                        firestoreId = firestoreId,
+
+                                        isShared = false
+                                    )
+
+                                    // SAVE ROOM
+                                    db.noteDao().insertNote(newNote)
+
+                                    // SAVE FIRESTORE
+                                    if (isInternetAvailable(context)) {
+
+                                        val noteData = hashMapOf(
+
+                                            "title" to title,
+                                            "desc" to content,
+                                            "time" to "Today",
+                                            "userId" to userId
                                         )
-                                    )
 
-                                    // FIRESTORE ONLINE
-                                    val noteData = hashMapOf(
+                                        FirebaseFirestore
+                                            .getInstance()
+                                            .collection("stories")
+                                            .document(firestoreId)
+                                            .set(noteData)
+                                    }
 
-                                        "title" to title,
-                                        "desc" to content,
-                                        "time" to "Today",
-                                        "userId" to userId
-                                    )
+                                } else {
 
-                                    FirebaseFirestore.getInstance()
-                                        .collection("stories")
-                                        .add(noteData)
-                                }else {
-
-                                    // EDIT NOTE
-                                    note?.copy(
+                                    // UPDATE ROOM
+                                    val updatedNote = note!!.copy(
 
                                         title = title,
                                         desc = content
+                                    )
 
-                                    )?.let { updatedNote ->
+                                    db.noteDao()
+                                        .updateNote(updatedNote)
 
-                                        db.noteDao().updateNote(updatedNote)
+                                    // UPDATE FIRESTORE
+                                    if (
+                                        isInternetAvailable(context)
+                                        &&
+                                        note!!.firestoreId.isNotEmpty()
+                                    ) {
+
+                                        val noteData = hashMapOf(
+
+                                            "title" to title,
+                                            "desc" to content,
+                                            "time" to note!!.time,
+                                            "userId" to note!!.userId
+                                        )
+
+                                        FirebaseFirestore
+                                            .getInstance()
+                                            .collection("stories")
+                                            .document(note!!.firestoreId)
+                                            .set(noteData)
                                     }
                                 }
 
@@ -177,13 +228,13 @@ fun CreateScreen(
                                     onBackClick()
                                 }
                             }
-                        },
+                        }
                     ) {
 
                         Icon(
                             imageVector = Icons.Default.Save,
                             contentDescription = null,
-                            tint = Color.White
+                            tint = Color(0xFF1565FF)
                         )
 
                         Spacer(modifier = Modifier.width(6.dp))
@@ -203,20 +254,25 @@ fun CreateScreen(
         bottomBar = {
 
             Row(
+
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color.White)
-                    .padding(horizontal = 18.dp, vertical = 10.dp),
+                    .padding(
+                        horizontal = 18.dp,
+                        vertical = 10.dp
+                    ),
 
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement =
+                    Arrangement.spacedBy(16.dp),
+
+                verticalAlignment =
+                    Alignment.CenterVertically
             ) {
 
-                // BOLD ICON
+                // BOLD
                 IconButton(
-                    onClick = {
-
-                    }
+                    onClick = {}
                 ) {
 
                     Icon(
@@ -225,8 +281,9 @@ fun CreateScreen(
                     )
                 }
 
-                // IMAGE PICKER
+                // IMAGE
                 IconButton(
+
                     onClick = {
 
                         imageLauncher.launch("image/*")
@@ -234,17 +291,18 @@ fun CreateScreen(
                 ) {
 
                     Icon(
-                        imageVector = Icons.Default.AddPhotoAlternate,
+                        imageVector =
+                            Icons.Default.AddPhotoAlternate,
+
                         contentDescription = null,
+
                         tint = Color(0xFF1565FF)
                     )
                 }
 
                 // LINK
                 IconButton(
-                    onClick = {
-
-                    }
+                    onClick = {}
                 ) {
 
                     Icon(
@@ -258,26 +316,29 @@ fun CreateScreen(
     ) { paddingValues ->
 
         Column(
+
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(horizontal = 20.dp)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(
+                    rememberScrollState()
+                )
         ) {
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // INFO TEXT
             Text(
-                text = "Created March 24, 2025  •  Personal",
+                text = "Created March 24, 2025 • Personal",
                 color = Color.Gray,
                 fontSize = 12.sp
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // TITLE INPUT
+            // TITLE
             BasicTextField(
+
                 value = title,
 
                 onValueChange = {
@@ -287,6 +348,7 @@ fun CreateScreen(
                 modifier = Modifier.fillMaxWidth(),
 
                 textStyle = TextStyle(
+
                     fontSize = 30.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.Black
@@ -297,9 +359,13 @@ fun CreateScreen(
                     if (title.isEmpty()) {
 
                         Text(
+
                             text = "Title",
+
                             color = Color.LightGray,
+
                             fontSize = 30.sp,
+
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -310,8 +376,9 @@ fun CreateScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // CONTENT INPUT
+            // CONTENT
             BasicTextField(
+
                 value = content,
 
                 onValueChange = {
@@ -323,8 +390,11 @@ fun CreateScreen(
                     .heightIn(min = 300.dp),
 
                 textStyle = TextStyle(
+
                     fontSize = 18.sp,
+
                     lineHeight = 28.sp,
+
                     color = Color.Black
                 ),
 
@@ -333,8 +403,11 @@ fun CreateScreen(
                     if (content.isEmpty()) {
 
                         Text(
+
                             text = "Start writing...",
+
                             color = Color.LightGray,
+
                             fontSize = 18.sp
                         )
                     }
@@ -345,18 +418,22 @@ fun CreateScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // DISPLAY IMAGE
+            // IMAGE
             selectedImageUri?.let { uri ->
 
                 Image(
-                    painter = rememberAsyncImagePainter(uri),
+
+                    painter =
+                        rememberAsyncImagePainter(uri),
 
                     contentDescription = null,
 
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(220.dp)
-                        .clip(RoundedCornerShape(20.dp)),
+                        .clip(
+                            RoundedCornerShape(20.dp)
+                        ),
 
                     contentScale = ContentScale.Crop
                 )
@@ -368,4 +445,3 @@ fun CreateScreen(
         }
     }
 }
-

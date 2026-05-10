@@ -13,5 +13,6 @@ data class NoteEntity(
     val time: String,
     // status apakah sudah di share
     val isShared: Boolean = false,
-    val userId: String = ""
+    val userId: String = "",
+    val firestoreId: String = ""
 )
