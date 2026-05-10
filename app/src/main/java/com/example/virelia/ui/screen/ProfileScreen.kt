@@ -29,7 +29,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(
+    onLogout: () -> Unit) {
 
     var imageUri by remember {
         mutableStateOf<Uri?>(null)
@@ -172,8 +173,7 @@ fun ProfileScreen() {
         // BUTTON LOGOUT
         OutlinedButton(
             onClick = {
-                auth.signOut()
-
+                onLogout()
             },
 
             modifier = Modifier

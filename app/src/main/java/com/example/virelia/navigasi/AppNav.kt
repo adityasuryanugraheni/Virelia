@@ -219,9 +219,23 @@ fun AppNav() {
             }
 
             // PROFILE
+            // PROFILE
             composable("profile") {
 
-                ProfileScreen()
+                ProfileScreen(
+
+                    onLogout = {
+
+                        FirebaseAuth.getInstance().signOut()
+
+                        navController.navigate("login") {
+
+                            popUpTo(0)
+
+                            launchSingleTop = true
+                        }
+                    }
+                )
             }
 
             // CREATE
