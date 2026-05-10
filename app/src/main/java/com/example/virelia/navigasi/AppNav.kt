@@ -27,6 +27,7 @@ import com.example.virelia.ui.screen.HomeScreen
 import com.example.virelia.ui.screen.LoginScreen
 import com.example.virelia.ui.screen.ProfileScreen
 import com.example.virelia.ui.screen.RegistrasiScreen
+import com.google.firebase.auth.FirebaseAuth
 
 data class BottomNavItem(
     val route: String,
@@ -38,6 +39,13 @@ data class BottomNavItem(
 fun AppNav() {
 
     val navController = rememberNavController()
+    val auth = FirebaseAuth.getInstance()
+
+    val startDestination =
+        if (auth.currentUser != null)
+            "home"
+        else
+            "login"
 
     val items = listOf(
 
@@ -137,7 +145,7 @@ fun AppNav() {
             navController = navController,
 
             // Pertama buka aplikasi langsung ke login
-            startDestination = "login",
+            startDestination = startDestination,
 
             modifier = Modifier.padding(paddingValues)
 

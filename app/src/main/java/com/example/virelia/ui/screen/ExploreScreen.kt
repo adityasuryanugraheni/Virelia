@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.compose.material.icons.filled.Favorite
 
 @Composable
 fun ExploreScreen(navController: NavController) {
@@ -169,6 +170,13 @@ fun ExploreNoteCard(
     comments: String
 ) {
 
+    var isLiked by remember {
+        mutableStateOf(false)
+    }
+    var likeCount by remember {
+        mutableStateOf(0)
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -257,19 +265,62 @@ fun ExploreNoteCard(
 
                 Spacer(modifier = Modifier.width(16.dp))
 
-                Icon(
-                    imageVector = Icons.Default.FavoriteBorder,
-                    contentDescription = null,
-                    tint = Color.Red
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable {
+                        if (isLiked) {
+                            isLiked = false
+                            likeCount--
+                        } else {
+                            isLiked = true
+                            likeCount++
+                        }
+                    }
+                ) {
 
-                Spacer(modifier = Modifier.width(6.dp))
+                    Icon(
+                        imageVector =
+                            if (isLiked)
+                                Icons.Default.Favorite
+                            else
+                                Icons.Default.FavoriteBorder,
 
-                Text(
-                    text = "Like",
-                    color = Color.Red,
-                    fontSize = 13.sp
-                )
+                        contentDescription = null,
+
+                        tint =
+                            if (isLiked)
+                                Color.Red
+                            else
+                                Color.Gray
+                    )
+
+                    Spacer(modifier = Modifier.width(6.dp))
+
+                    Column {
+
+                        Text(
+                            text =
+                                if (isLiked)
+                                    "Liked"
+                                else
+                                    "Like",
+
+                            color =
+                                if (isLiked)
+                                    Color.Red
+                                else
+                                    Color.Gray,
+
+                            fontSize = 13.sp
+                        )
+
+                        Text(
+                            text = "$likeCount likes",
+                            color = Color.Gray,
+                            fontSize = 11.sp
+                        )
+                    }
+                }
             }
         }
     }

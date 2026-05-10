@@ -22,6 +22,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.virelia.R
 import com.google.firebase.auth.FirebaseAuth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.text.input.VisualTransformation
 
 @Composable
 fun LoginScreen(
@@ -31,6 +37,7 @@ fun LoginScreen(
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
 
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
@@ -107,9 +114,11 @@ fun LoginScreen(
                     value = email,
                     onValueChange = { email = it },
                     modifier = Modifier.fillMaxWidth(),
+
                     placeholder = {
                         Text("name@example.com")
                     },
+
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = Color.Black,
                         unfocusedTextColor = Color.Black,
@@ -134,11 +143,37 @@ fun LoginScreen(
                     value = password,
                     onValueChange = { password = it },
                     modifier = Modifier.fillMaxWidth(),
+
                     visualTransformation =
-                        PasswordVisualTransformation(),
+                        if (passwordVisible)
+                            VisualTransformation.None
+                        else
+                            PasswordVisualTransformation(),
+
                     placeholder = {
                         Text("Enter your password")
                     },
+
+                    trailingIcon = {
+
+                        val image =
+                            if (passwordVisible)
+                                Icons.Filled.Visibility
+                            else
+                                Icons.Filled.VisibilityOff
+
+                        IconButton(
+                            onClick = {
+                                passwordVisible = !passwordVisible
+                            }
+                        ) {
+                            Icon(
+                                imageVector = image,
+                                contentDescription = "Password Visibility"
+                            )
+                        }
+                    },
+
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = Color.Black,
                         unfocusedTextColor = Color.Black,
@@ -178,28 +213,27 @@ fun LoginScreen(
                             errorMessage =
                                 "Email dan password wajib diisi"
 
-                            return@Button
+                        } else {
+
+                            isLoading = true
+
+                            auth.signInWithEmailAndPassword(
+                                email,
+                                password
+                            )
+                                .addOnSuccessListener {
+
+                                    isLoading = false
+
+                                    onLoginSuccess()
+                                }
+                                .addOnFailureListener { exception ->
+
+                                    isLoading = false
+
+                                    errorMessage = exception.message ?: "Login gagal"
+                                }
                         }
-
-                        isLoading = true
-
-                        auth.signInWithEmailAndPassword(
-                            email,
-                            password
-                        )
-                            .addOnSuccessListener {
-
-                                isLoading = false
-
-                                onLoginSuccess()
-                            }
-                            .addOnFailureListener {
-
-                                isLoading = false
-
-                                errorMessage =
-                                    it.message.toString()
-                            }
                     },
 
                     modifier = Modifier
