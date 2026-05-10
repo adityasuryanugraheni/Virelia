@@ -190,7 +190,18 @@ fun AppNav() {
             // HOME
             composable("home") {
 
-                HomeScreen()
+                HomeScreen(
+
+                    onAddClick = {
+
+                        navController.navigate("create/-1")
+                    },
+
+                    onEditClick = { note ->
+
+                        navController.navigate("create/${note.id}")
+                    }
+                )
             }
 
             // EXPLORE
@@ -206,9 +217,22 @@ fun AppNav() {
             }
 
             // CREATE
-            composable("create") {
+            composable("create/{noteId}") { backStackEntry ->
 
-                CreateScreen()
+                val noteId =
+                    backStackEntry.arguments
+                        ?.getString("noteId")
+                        ?.toIntOrNull()
+
+                CreateScreen(
+
+                    noteId = noteId,
+
+                    onBackClick = {
+
+                        navController.popBackStack()
+                    }
+                )
             }
 
             // DETAIL

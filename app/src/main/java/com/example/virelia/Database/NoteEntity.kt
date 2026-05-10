@@ -8,10 +8,9 @@ data class NoteEntity(
 
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-
     val title: String,
-
     val desc: String,
-
-    val time: String
+    val time: String,
+    // status apakah sudah di share
+    val isShared: Boolean = false
 )

@@ -39,8 +39,28 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateScreen(
+    noteId: Int? = null,
     onBackClick: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val db = DatabaseProvider.getDatabase(context)
+
+    var note by remember {
+        mutableStateOf<NoteEntity?>(null)
+    }
+
+    LaunchedEffect(noteId) {
+
+        if (noteId != null && noteId != -1) {
+
+            CoroutineScope(Dispatchers.IO).launch {
+
+                val data = db.noteDao().getNoteById(noteId)
+
+                note = data
+            }
+        }
+    }
 
     var title by remember {
         mutableStateOf("")
@@ -50,11 +70,18 @@ fun CreateScreen(
         mutableStateOf("")
     }
 
+    LaunchedEffect(note) {
+
+        note?.let {
+
+            title = it.title
+            content = it.desc
+        }
+    }
+
     var selectedImageUri by remember {
         mutableStateOf<Uri?>(null)
     }
-
-    val context = LocalContext.current
 
     // IMAGE PICKER
     val imageLauncher = rememberLauncherForActivityResult(
@@ -95,29 +122,45 @@ fun CreateScreen(
 
                 actions = {
 
-                    Button(
+                    TextButton(
                         onClick = {
 
                             val db = DatabaseProvider.getDatabase(context)
 
                             CoroutineScope(Dispatchers.IO).launch {
 
-                                db.noteDao().insertNote(
+                                if (note == null) {
 
-                                    NoteEntity(
-                                        title = title,
-                                        desc = content,
-                                        time = "Today"
+                                    // CREATE BARU
+                                    db.noteDao().insertNote(
+
+                                        NoteEntity(
+                                            title = title,
+                                            desc = content,
+                                            time = "Today"
+                                        )
                                     )
-                                )
+
+                                }else {
+
+                                    // EDIT NOTE
+                                    note?.copy(
+
+                                        title = title,
+                                        desc = content
+
+                                    )?.let { updatedNote ->
+
+                                        db.noteDao().updateNote(updatedNote)
+                                    }
+                                }
+
+                                launch(Dispatchers.Main) {
+
+                                    onBackClick()
+                                }
                             }
                         },
-
-                        shape = RoundedCornerShape(12.dp),
-
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF1565FF)
-                        )
                     ) {
 
                         Icon(
@@ -130,7 +173,8 @@ fun CreateScreen(
 
                         Text(
                             text = "Save",
-                            color = Color.White
+                            color = Color(0xFF1565FF),
+                            fontWeight = FontWeight.Bold
                         )
                     }
 

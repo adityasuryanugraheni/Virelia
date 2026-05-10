@@ -1,5 +1,6 @@
 package com.example.virelia.ui.screen
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,36 +19,32 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.ui.platform.LocalContext
+import com.example.virelia.Database.DatabaseProvider
+import com.example.virelia.Database.NoteEntity
+import com.google.firebase.firestore.FirebaseFirestore
+import android.widget.Toast
+import com.example.virelia.utils.isInternetAvailable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.collectAsState
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    onAddClick: () -> Unit,
+    onEditClick: (NoteEntity) -> Unit) {
+    val context = LocalContext.current
 
-    // DUMMY UI DATA
-    val notes = listOf(
-        mapOf(
-            "category" to "Public",
-            "title" to "The Future of Minimalist UI",
-            "desc" to "In a world of constant digital noise...",
-            "time" to "2 hours ago",
-            "public" to true
-        ),
+    val db = DatabaseProvider.getDatabase(context)
 
-        mapOf(
-            "category" to "Private",
-            "title" to "Grocery List for Dinner",
-            "desc" to "Don't forget the organic basil...",
-            "time" to "5 hours ago",
-            "public" to false
-        ),
-
-        mapOf(
-            "category" to "Private",
-            "title" to "Daily Reflections",
-            "desc" to "Reflection is the process...",
-            "time" to "Yesterday",
-            "public" to false
-        )
-    )
+    val notes by db.noteDao()
+        .getAllNotes()
+        .collectAsState(initial = emptyList())
 
     Scaffold(
 
@@ -56,7 +53,7 @@ fun HomeScreen() {
         floatingActionButton = {
 
             FloatingActionButton(
-                onClick = {},
+                onClick = onAddClick,
                 containerColor = Color(0xFF1565FF)
             ) {
 
@@ -110,11 +107,11 @@ fun HomeScreen() {
                 items(notes) { note ->
 
                     NoteCard(
-                        category = note["category"].toString(),
-                        title = note["title"].toString(),
-                        desc = note["desc"].toString(),
-                        time = note["time"].toString(),
-                        isPublic = note["public"] as Boolean
+                        note = note,
+
+                        onEditClick = { note ->
+                            onEditClick(note)
+                        }
                     )
                 }
 
@@ -176,15 +173,32 @@ fun SearchBar() {
 
 @Composable
 fun NoteCard(
-    category: String,
-    title: String,
-    desc: String,
-    time: String,
-    isPublic: Boolean
+    note: NoteEntity,
+    onEditClick: (NoteEntity) -> Unit
 ) {
+    val context = LocalContext.current
+
+    var showMenu by remember {
+        mutableStateOf(false)
+    }
+
+    var showDeleteDialog by remember {
+        mutableStateOf(false)
+    }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .pointerInput(Unit) {
+
+                detectTapGestures(
+
+                    onLongPress = {
+
+                        showMenu = true
+                    }
+                )
+            },
 
         shape = RoundedCornerShape(24.dp),
 
@@ -211,14 +225,18 @@ fun NoteCard(
                     shape = RoundedCornerShape(30.dp),
 
                     color =
-                        if (isPublic)
+                        if (note.isShared)
                             Color(0xFFE4EEFF)
                         else
                             Color(0xFFEFEFEF)
                 ) {
 
                     Text(
-                        text = category,
+                        text =
+                            if (note.isShared)
+                                "Public"
+                            else
+                                "Private",
 
                         modifier = Modifier.padding(
                             horizontal = 12.dp,
@@ -230,7 +248,7 @@ fun NoteCard(
                 }
 
                 Text(
-                    text = time,
+                    text = note.time,
                     fontSize = 12.sp,
                     color = Color.Gray
                 )
@@ -240,7 +258,7 @@ fun NoteCard(
 
             // TITLE
             Text(
-                text = title,
+                text = note.title,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -249,7 +267,7 @@ fun NoteCard(
 
             // DESCRIPTION
             Text(
-                text = desc,
+                text = note.desc,
                 fontSize = 14.sp,
                 lineHeight = 20.sp,
                 color = Color.Gray
@@ -258,7 +276,7 @@ fun NoteCard(
             Spacer(modifier = Modifier.height(18.dp))
 
             // SHARE
-            if (isPublic) {
+            if (note.isShared) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End,
@@ -280,9 +298,53 @@ fun NoteCard(
                     )
                 }
             } else {
+                val context = LocalContext.current
+
                 Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable {
+
+                        if (isInternetAvailable(context)) {
+
+                            val firestore = FirebaseFirestore.getInstance()
+
+                            val db = DatabaseProvider.getDatabase(context)
+
+                            val noteData = hashMapOf(
+
+                                "title" to note.title,
+                                "desc" to note.desc,
+                                "time" to note.time
+                            )
+
+                            firestore.collection("stories")
+                                .add(noteData)
+                                .addOnSuccessListener {
+
+                                    CoroutineScope(Dispatchers.IO).launch {
+
+                                        db.noteDao().updateNote(
+                                            note.copy(isShared = true)
+                                        )
+                                    }
+
+                                    Toast.makeText(
+                                        context,
+                                        "Story berhasil di share",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+
+                        } else {
+
+                            Toast.makeText(
+                                context,
+                                "Tidak ada internet",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                ){
 
                     Icon(
                         imageVector = Icons.Default.Share,
@@ -300,5 +362,96 @@ fun NoteCard(
                 }
             }
         }
+
+        DropdownMenu(
+            expanded = showMenu,
+
+            onDismissRequest = {
+                showMenu = false
+            }
+        ) {
+
+            // EDIT
+            DropdownMenuItem(
+
+                text = {
+                    Text("Edit")
+                },
+
+                onClick = {
+
+                    showMenu = false
+                    onEditClick(note)
+                }
+            )
+
+            // DELETE
+            DropdownMenuItem(
+
+                text = {
+                    Text("Delete")
+                },
+
+                onClick = {
+
+                    showMenu = false
+                    showDeleteDialog = true
+                }
+            )
+        }
+    }
+    if (showDeleteDialog) {
+
+        AlertDialog(
+
+            onDismissRequest = {
+                showDeleteDialog = false
+            },
+
+            title = {
+                Text("Delete Story")
+            },
+
+            text = {
+                Text("Are you sure to delete this story?")
+            },
+
+            confirmButton = {
+
+                TextButton(
+
+                    onClick = {
+
+                        showDeleteDialog = false
+
+                        val db = DatabaseProvider.getDatabase(context)
+
+                        CoroutineScope(Dispatchers.IO).launch {
+
+                            db.noteDao().deleteNote(note)
+                        }
+                    }
+                ) {
+
+                    Text(
+                        text = "Delete",
+                        color = Color.Red
+                    )
+                }
+            },
+
+            dismissButton = {
+
+                TextButton(
+
+                    onClick = {
+                        showDeleteDialog = false
+                    }
+                ) {
+
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
