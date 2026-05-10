@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -19,9 +20,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.ui.platform.LocalFocusManager
 
 @Composable
 fun ExploreScreen(navController: NavController) {
+
+    var searchText by remember {
+        mutableStateOf("")
+    }
 
     // DATA DUMMY EXPLORE
     val publicNotes = listOf(
@@ -72,7 +81,12 @@ fun ExploreScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(10.dp))
 
             // SEARCH BAR
-            ExploreSearchBar()
+            ExploreSearchBar(
+                text = searchText,
+                onTextChange = {
+                    searchText = it
+                }
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -91,7 +105,11 @@ fun ExploreScreen(navController: NavController) {
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
 
-                items(publicNotes) { note ->
+                items(
+                    publicNotes.filter {
+                        it["title"].toString().contains(searchText, true)
+                    }
+                ) { note ->
 
                     ExploreNoteCard(
                         navController = navController,
@@ -102,27 +120,32 @@ fun ExploreScreen(navController: NavController) {
                         comments = note["comments"].toString()
                     )
                 }
-
-                item {
-                    Spacer(modifier = Modifier.height(90.dp))
-                }
             }
         }
     }
 }
 
 @Composable
-fun ExploreSearchBar() {
+fun ExploreSearchBar(
+    text: String,
+    onTextChange: (String) -> Unit
+) {
 
-    var text by remember {
-        mutableStateOf("")
-    }
+    val focusManager = LocalFocusManager.current
 
     OutlinedTextField(
         value = text,
-        onValueChange = {
-            text = it
-        },
+        onValueChange = onTextChange,
+
+        keyboardOptions = KeyboardOptions(
+            imeAction = ImeAction.Search
+        ),
+
+        keyboardActions = KeyboardActions(
+            onSearch = {
+                focusManager.clearFocus()
+            }
+        ),
 
         modifier = Modifier.fillMaxWidth(),
 
@@ -170,10 +193,11 @@ fun ExploreNoteCard(
     comments: String
 ) {
 
-    var isLiked by remember {
+    var isLiked by rememberSaveable {
         mutableStateOf(false)
     }
-    var likeCount by remember {
+
+    var likeCount by rememberSaveable {
         mutableStateOf(0)
     }
 
