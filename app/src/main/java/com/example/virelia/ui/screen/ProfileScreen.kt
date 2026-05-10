@@ -25,12 +25,39 @@ import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.example.virelia.R
 import androidx.compose.ui.text.font.FontWeight
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun ProfileScreen() {
 
     var imageUri by remember {
         mutableStateOf<Uri?>(null)
+    }
+    var username by remember {
+        mutableStateOf("")
+    }
+
+    var email by remember {
+        mutableStateOf("")
+    }
+    val auth = FirebaseAuth.getInstance()
+    val db = FirebaseFirestore.getInstance()
+
+    val currentUser = auth.currentUser
+    LaunchedEffect(Unit) {
+
+        currentUser?.uid?.let { uid ->
+
+            db.collection("users")
+                .document(uid)
+                .get()
+                .addOnSuccessListener { document ->
+
+                    username = document.getString("username") ?: ""
+                    email = document.getString("email") ?: ""
+                }
+        }
     }
 
     val launcher = rememberLauncherForActivityResult(
@@ -110,9 +137,19 @@ fun ProfileScreen() {
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        //username
         Text(
-            text = "Alex Rivera",
-            fontSize = 24.sp
+            text = username,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold
+        )
+        //email
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Text(
+            text = email,
+            color = Color.Gray,
+            fontSize = 14.sp
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -135,6 +172,7 @@ fun ProfileScreen() {
         // BUTTON LOGOUT
         OutlinedButton(
             onClick = {
+                auth.signOut()
 
             },
 
