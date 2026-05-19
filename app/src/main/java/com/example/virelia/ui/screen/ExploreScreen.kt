@@ -24,38 +24,21 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.virelia.ui.viewmodel.ExploreViewModel
 
 @Composable
-fun ExploreScreen(navController: NavController) {
+fun ExploreScreen(
+    navController: NavController,
+    viewModel: ExploreViewModel = viewModel()
+) {
 
     var searchText by remember {
         mutableStateOf("")
     }
 
-    // DATA DUMMY EXPLORE
-    val publicNotes = listOf(
-        mapOf(
-            "username" to "@alex_r",
-            "title" to "Reflections on Minimalist Architecture",
-            "desc" to "The intersection of silence and space creates a dialogue that most modern structures fail to acknowledge...",
-            "time" to "2 hours ago",
-            "comments" to "12"
-        ),
-        mapOf(
-            "username" to "@jordan_design",
-            "title" to "The Ethics of AI in Creative Tools",
-            "desc" to "Are we losing the human touch or simply evolving the brush? As generative models become integrated...",
-            "time" to "5 hours ago",
-            "comments" to "28"
-        ),
-        mapOf(
-            "username" to "@sam_ideas",
-            "title" to "Morning Coffee Rituals",
-            "desc" to "There is a specific rhythm to the world before 7 AM. The sound of water boiling, the ritualistic...",
-            "time" to "Yesterday",
-            "comments" to "56"
-        )
-    )
+    val publicNotes by
+    viewModel.publicStories.collectAsState()
 
     Scaffold(
         containerColor = Color(0xFFF5F5F7)
@@ -107,17 +90,21 @@ fun ExploreScreen(navController: NavController) {
 
                 items(
                     publicNotes.filter {
-                        it["title"].toString().contains(searchText, true)
+
+                        it.title.contains(searchText, true)
                     }
                 ) { note ->
 
                     ExploreNoteCard(
+
                         navController = navController,
-                        username = note["username"].toString(),
-                        title = note["title"].toString(),
-                        desc = note["desc"].toString(),
-                        time = note["time"].toString(),
-                        comments = note["comments"].toString()
+
+                        username = note.userId,
+                        title = note.title,
+                        desc = note.desc,
+                        time = note.time,
+
+                        comments = "0"
                     )
                 }
             }
