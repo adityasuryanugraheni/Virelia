@@ -21,30 +21,22 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.virelia.R
-import com.google.firebase.auth.FirebaseAuth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.virelia.ui.viewmodel.LoginViewModel
 
 @Composable
 fun LoginScreen(
     onSignUpClick: () -> Unit,
-    onLoginSuccess: () -> Unit
+    onLoginSuccess: () -> Unit,
+    viewModel: LoginViewModel = viewModel()
 ) {
-
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
-
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf("") }
-
     val focusManager = LocalFocusManager.current
-
-    val auth = FirebaseAuth.getInstance()
 
     Column(
         modifier = Modifier
@@ -111,9 +103,8 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    value = viewModel.email,
+                    onValueChange = { viewModel.email = it },
 
                     placeholder = {
                         Text("name@example.com")
@@ -140,12 +131,12 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
+                    value = viewModel.password,
+                    onValueChange = { viewModel.password = it },
                     modifier = Modifier.fillMaxWidth(),
 
                     visualTransformation =
-                        if (passwordVisible)
+                        if (viewModel.passwordVisible)
                             VisualTransformation.None
                         else
                             PasswordVisualTransformation(),
@@ -157,14 +148,14 @@ fun LoginScreen(
                     trailingIcon = {
 
                         val image =
-                            if (passwordVisible)
+                            if (viewModel.passwordVisible)
                                 Icons.Filled.Visibility
                             else
                                 Icons.Filled.VisibilityOff
 
                         IconButton(
                             onClick = {
-                                passwordVisible = !passwordVisible
+                                viewModel.togglePasswordVisibility()
                             }
                         ) {
                             Icon(
@@ -187,10 +178,10 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                if (errorMessage.isNotEmpty()) {
+                if (viewModel.errorMessage.isNotEmpty()) {
 
                     Text(
-                        text = errorMessage,
+                        text = viewModel.errorMessage,
                         color = Color.Red,
                         fontSize = 13.sp
                     )
@@ -202,38 +193,7 @@ fun LoginScreen(
 
                 Button(
                     onClick = {
-
-                        errorMessage = ""
-
-                        if (
-                            email.isEmpty() ||
-                            password.isEmpty()
-                        ) {
-
-                            errorMessage =
-                                "Email dan password wajib diisi"
-
-                        } else {
-
-                            isLoading = true
-
-                            auth.signInWithEmailAndPassword(
-                                email,
-                                password
-                            )
-                                .addOnSuccessListener {
-
-                                    isLoading = false
-
-                                    onLoginSuccess()
-                                }
-                                .addOnFailureListener { exception ->
-
-                                    isLoading = false
-
-                                    errorMessage = exception.message ?: "Login gagal"
-                                }
-                        }
+                        viewModel.login(onLoginSuccess)
                     },
 
                     modifier = Modifier
@@ -244,10 +204,10 @@ fun LoginScreen(
                         containerColor = Color(0xFF2979FF)
                     ),
 
-                    enabled = !isLoading
+                    enabled = !viewModel.isLoading
                 ) {
 
-                    if (isLoading) {
+                    if (viewModel.isLoading) {
 
                         CircularProgressIndicator(
                             color = Color.White,

@@ -17,13 +17,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.virelia.ui.viewmodel.DetailViewModel
 
 @Composable
-fun DetailScreen(navController: NavController) {
-
-    var comment by remember {
-        mutableStateOf("")
-    }
+fun DetailScreen(
+    navController: NavController,
+    viewModel: DetailViewModel = viewModel()
+) {
 
     LazyColumn(
         modifier = Modifier
@@ -173,9 +174,9 @@ fun DetailScreen(navController: NavController) {
 
                 // INPUT COMMENT
                 OutlinedTextField(
-                    value = comment,
+                    value = viewModel.comment,
                     onValueChange = {
-                        comment = it
+                        viewModel.comment = it
                     },
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = {
@@ -187,7 +188,10 @@ fun DetailScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(14.dp))
 
                 Button(
-                    onClick = { },
+                    onClick = {
+                        viewModel.postComment()
+                    },
+
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF1565FF)
