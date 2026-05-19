@@ -13,58 +13,39 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.ExitToApp
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.virelia.R
-import androidx.compose.ui.text.font.FontWeight
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import com.example.virelia.viewmodel.ProfileViewModel
 
 @Composable
 fun ProfileScreen(
-    onLogout: () -> Unit) {
+    onLogout: () -> Unit,
+    viewModel: ProfileViewModel = viewModel()
+) {
 
-    var imageUri by remember {
-        mutableStateOf<Uri?>(null)
-    }
-    var username by remember {
-        mutableStateOf("")
-    }
+    val username by viewModel.username
 
-    var email by remember {
-        mutableStateOf("")
-    }
-    val auth = FirebaseAuth.getInstance()
-    val db = FirebaseFirestore.getInstance()
+    val email by viewModel.email
 
-    val currentUser = auth.currentUser
-    LaunchedEffect(Unit) {
-
-        currentUser?.uid?.let { uid ->
-
-            db.collection("users")
-                .document(uid)
-                .get()
-                .addOnSuccessListener { document ->
-
-                    username = document.getString("username") ?: ""
-                    email = document.getString("email") ?: ""
-                }
-        }
-    }
+    val imageUri by viewModel.imageUri
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
-    ) {
-        imageUri = it
+    ) { uri: Uri? ->
+
+        viewModel.updateImage(uri)
     }
 
     Column(
@@ -75,25 +56,27 @@ fun ProfileScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        // TOP BAR
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 100.dp),
+
             horizontalArrangement = Arrangement.Center
         ) {
 
             Text(
                 text = "Profile",
+
                 fontSize = 30.sp,
+
                 fontWeight = FontWeight.Bold,
+
                 color = Color.Black
             )
         }
 
         Spacer(modifier = Modifier.height(90.dp))
 
-        // FOTO PROFIL
         Box(
             contentAlignment = Alignment.BottomEnd
         ) {
@@ -120,6 +103,7 @@ fun ProfileScreen(
                     .clip(CircleShape)
                     .background(Color(0xFF2979FF))
                     .clickable {
+
                         launcher.launch("image/*")
                     },
 
@@ -128,52 +112,62 @@ fun ProfileScreen(
 
                 Icon(
                     imageVector = Icons.Default.Edit,
+
                     contentDescription = "Edit",
+
                     tint = Color.White
                 )
-
             }
-
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        //username
         Text(
             text = username,
+
             fontSize = 24.sp,
+
             fontWeight = FontWeight.Bold
         )
-        //email
+
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
             text = email,
+
             color = Color.Gray,
+
             fontSize = 14.sp
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // STATISTIK
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
+
+            horizontalArrangement =
+                Arrangement.SpaceEvenly
         ) {
 
             ProfileStat("124", "Notes")
-            ProfileStat("48", "Public")
-            ProfileStat("892", "Likes")
-            ProfileStat("1.2k", "Comment")
 
+            ProfileStat("48", "Public")
+
+            ProfileStat("892", "Likes")
+
+            ProfileStat("1.2k", "Comment")
         }
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        // BUTTON LOGOUT
         OutlinedButton(
+
             onClick = {
-                onLogout()
+
+                viewModel.logout {
+
+                    onLogout()
+                }
             },
 
             modifier = Modifier
@@ -183,14 +177,18 @@ fun ProfileScreen(
 
             shape = RoundedCornerShape(12.dp),
 
-            colors = ButtonDefaults.outlinedButtonColors(
-                containerColor = Color.Red
-            )
+            colors =
+                ButtonDefaults.outlinedButtonColors(
+                    containerColor = Color.Red
+                )
         ) {
 
             Icon(
-                imageVector = Icons.Outlined.ExitToApp,
+                imageVector =
+                    Icons.Outlined.ExitToApp,
+
                 contentDescription = "Logout",
+
                 tint = Color.White
             )
 
@@ -198,13 +196,11 @@ fun ProfileScreen(
 
             Text(
                 text = "Logout",
+
                 color = Color.White
             )
-
         }
-
     }
-
 }
 
 @Composable
@@ -214,20 +210,22 @@ fun ProfileStat(
 ) {
 
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment =
+            Alignment.CenterHorizontally
     ) {
 
         Text(
             text = number,
+
             color = Color(0xFF2979FF),
+
             fontSize = 18.sp
         )
 
         Text(
             text = title,
+
             color = Color.Gray
         )
-
     }
-
 }

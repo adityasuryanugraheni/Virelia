@@ -185,9 +185,9 @@ fun AppNav() {
 
                     onRegisterSuccess = {
 
-                        navController.navigate("home") {
+                        navController.navigate("login") {
 
-                            popUpTo("login") {
+                            popUpTo("registrasi") {
                                 inclusive = true
                             }
                         }
