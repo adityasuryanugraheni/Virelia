@@ -27,4 +27,8 @@ interface NoteDao {
 
     @Query("SELECT * FROM notes WHERE userId = :userId")
     fun getNotesByUser(userId: String): Flow<List<NoteEntity>>
+
+    // TAMBAHAN
+    @Query("DELETE FROM notes WHERE userId = :userId")
+    suspend fun deleteNotesByUser(userId: String)
 }

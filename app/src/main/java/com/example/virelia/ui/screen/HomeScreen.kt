@@ -46,6 +46,14 @@ fun HomeScreen(
     val context = LocalContext.current
     val notes by viewModel.notes.collectAsState()
 
+    LaunchedEffect(Unit) {
+
+        if (isInternetAvailable(context)) {
+
+            viewModel.syncStories()
+        }
+    }
+
     Scaffold(
 
         containerColor = Color(0xFFF5F5F7),

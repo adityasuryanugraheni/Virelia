@@ -37,32 +37,26 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.virelia.ui.viewmodel.CreateViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateScreen(
+
     noteId: Int? = null,
-    onBackClick: () -> Unit = {}
-) {
+    onBackClick: () -> Unit = {},
 
-    val context = LocalContext.current
-    val db = DatabaseProvider.getDatabase(context)
-
-    var note by remember {
-        mutableStateOf<NoteEntity?>(null)
-    }
+    viewModel: CreateViewModel = viewModel()
+){
+    val note by viewModel.note.collectAsState()
 
     // AMBIL NOTE UNTUK EDIT
     LaunchedEffect(noteId) {
 
         if (noteId != null && noteId != -1) {
 
-            CoroutineScope(Dispatchers.IO).launch {
-
-                val data = db.noteDao().getNoteById(noteId)
-
-                note = data
-            }
+            viewModel.getNote(noteId)
         }
     }
 
@@ -136,98 +130,17 @@ fun CreateScreen(
 
                         onClick = {
 
-                            CoroutineScope(Dispatchers.IO).launch {
+                            viewModel.saveNote(
 
-                                val userId =
-                                    FirebaseAuth
-                                        .getInstance()
-                                        .currentUser
-                                        ?.uid ?: ""
+                                note = note,
+                                title = title,
+                                content = content,
 
-                                // CREATE
-                                if (note == null) {
-
-                                    val firestoreId =
-                                        FirebaseFirestore
-                                            .getInstance()
-                                            .collection("stories")
-                                            .document()
-                                            .id
-
-                                    val newNote = NoteEntity(
-
-                                        title = title,
-                                        desc = content,
-                                        time = "Today",
-
-                                        userId = userId,
-
-                                        firestoreId = firestoreId,
-
-                                        isShared = false
-                                    )
-
-                                    // SAVE ROOM
-                                    db.noteDao().insertNote(newNote)
-
-                                    // SAVE FIRESTORE
-                                    if (isInternetAvailable(context)) {
-
-                                        val noteData = hashMapOf(
-
-                                            "title" to title,
-                                            "desc" to content,
-                                            "time" to "Today",
-                                            "userId" to userId
-                                        )
-
-                                        FirebaseFirestore
-                                            .getInstance()
-                                            .collection("stories")
-                                            .document(firestoreId)
-                                            .set(noteData)
-                                    }
-
-                                } else {
-
-                                    // UPDATE ROOM
-                                    val updatedNote = note!!.copy(
-
-                                        title = title,
-                                        desc = content
-                                    )
-
-                                    db.noteDao()
-                                        .updateNote(updatedNote)
-
-                                    // UPDATE FIRESTORE
-                                    if (
-                                        isInternetAvailable(context)
-                                        &&
-                                        note!!.firestoreId.isNotEmpty()
-                                    ) {
-
-                                        val noteData = hashMapOf(
-
-                                            "title" to title,
-                                            "desc" to content,
-                                            "time" to note!!.time,
-                                            "userId" to note!!.userId
-                                        )
-
-                                        FirebaseFirestore
-                                            .getInstance()
-                                            .collection("stories")
-                                            .document(note!!.firestoreId)
-                                            .set(noteData)
-                                    }
-                                }
-
-                                launch(Dispatchers.Main) {
+                                onSuccess = {
 
                                     onBackClick()
                                 }
-                            }
+                            )
                         }
                     ) {
 
