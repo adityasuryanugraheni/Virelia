@@ -8,9 +8,14 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 
 class ExploreViewModel(application: Application)
     : AndroidViewModel(application) {
+
+
 
     private val _publicStories =
         MutableStateFlow<List<NoteEntity>>(emptyList())
@@ -18,6 +23,31 @@ class ExploreViewModel(application: Application)
     val publicStories:
             StateFlow<List<NoteEntity>>
             = _publicStories
+
+    fun toggleLike(note: NoteEntity) {
+
+        val updatedList = _publicStories.value.toMutableList()
+
+        val index = updatedList.indexOf(note)
+
+        if (index != -1) {
+
+            val currentNote = updatedList[index]
+
+            updatedList[index] = currentNote.copy(
+
+                isLiked = !currentNote.isLiked,
+
+                likeCount =
+                    if (currentNote.isLiked)
+                        currentNote.likeCount - 1
+                    else
+                        currentNote.likeCount + 1
+            )
+
+            _publicStories.value = updatedList
+        }
+    }
 
     init {
 

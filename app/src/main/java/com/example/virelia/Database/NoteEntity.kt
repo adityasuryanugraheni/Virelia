@@ -14,5 +14,8 @@ data class NoteEntity(
     // status apakah sudah di share
     val isShared: Boolean = false,
     val userId: String = "",
-    val firestoreId: String = ""
+    val firestoreId: String = "",
+
+    var isLiked: Boolean = false,
+    var likeCount: Int = 0
 )

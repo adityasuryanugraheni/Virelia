@@ -25,6 +25,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.virelia.Database.NoteEntity
 import com.example.virelia.ui.viewmodel.ExploreViewModel
 
 @Composable
@@ -87,7 +88,6 @@ fun ExploreScreen(
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-
                 items(
                     publicNotes.filter {
 
@@ -96,6 +96,9 @@ fun ExploreScreen(
                 ) { note ->
 
                     ExploreNoteCard(
+
+                        viewModel = viewModel,
+                        note = note,
 
                         navController = navController,
 
@@ -172,6 +175,9 @@ fun ExploreSearchBar(
 
 @Composable
 fun ExploreNoteCard(
+
+    viewModel: ExploreViewModel,
+    note: NoteEntity,
     navController: NavController,
     username: String,
     title: String,
@@ -180,19 +186,13 @@ fun ExploreNoteCard(
     comments: String
 ) {
 
-    var isLiked by rememberSaveable {
-        mutableStateOf(false)
-    }
-
-    var likeCount by rememberSaveable {
-        mutableStateOf(0)
-    }
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
-                navController.navigate("detail")
+                navController.navigate(
+                    "detail/$title/$desc/$username"
+                )
             },
 
         shape = RoundedCornerShape(24.dp),
@@ -279,19 +279,13 @@ fun ExploreNoteCard(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.clickable {
-                        if (isLiked) {
-                            isLiked = false
-                            likeCount--
-                        } else {
-                            isLiked = true
-                            likeCount++
-                        }
+                        viewModel.toggleLike(note)
                     }
                 ) {
 
                     Icon(
                         imageVector =
-                            if (isLiked)
+                            if (note.isLiked)
                                 Icons.Default.Favorite
                             else
                                 Icons.Default.FavoriteBorder,
@@ -299,7 +293,7 @@ fun ExploreNoteCard(
                         contentDescription = null,
 
                         tint =
-                            if (isLiked)
+                            if (note.isLiked)
                                 Color.Red
                             else
                                 Color.Gray
@@ -310,25 +304,15 @@ fun ExploreNoteCard(
                     Column {
 
                         Text(
-                            text =
-                                if (isLiked)
-                                    "Liked"
-                                else
-                                    "Like",
+                            text = "${note.likeCount} likes",
 
                             color =
-                                if (isLiked)
+                                if (note.isLiked)
                                     Color.Red
                                 else
                                     Color.Gray,
 
                             fontSize = 13.sp
-                        )
-
-                        Text(
-                            text = "$likeCount likes",
-                            color = Color.Gray,
-                            fontSize = 11.sp
                         )
                     }
                 }

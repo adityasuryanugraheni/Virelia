@@ -6,7 +6,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -23,6 +22,9 @@ import com.example.virelia.ui.viewmodel.DetailViewModel
 @Composable
 fun DetailScreen(
     navController: NavController,
+    title: String,
+    desc: String,
+    username: String,
     viewModel: DetailViewModel = viewModel()
 ) {
 
@@ -62,7 +64,7 @@ fun DetailScreen(
 
                 // USERNAME
                 Text(
-                    text = "@alex_r",
+                    text = username,
                     color = Color(0xFF1565FF),
                     fontWeight = FontWeight.Bold
                 )
@@ -71,7 +73,7 @@ fun DetailScreen(
 
                 // TITLE
                 Text(
-                    text = "Reflections on Minimalist Architecture",
+                    text = title,
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -80,97 +82,12 @@ fun DetailScreen(
 
                 // ISI NOTE
                 Text(
-                    text = "The intersection of silence and space creates a dialogue that most modern structures fail to acknowledge. Minimalist architecture is not merely about reducing objects, but refining intention and emotional resonance within a room.",
+                    text = desc,
                     lineHeight = 24.sp,
                     color = Color.DarkGray
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
-
-                // LIKE
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-
-                    Icon(
-                        imageVector = Icons.Default.Favorite,
-                        contentDescription = null,
-                        tint = Color.Red
-                    )
-
-                    Spacer(modifier = Modifier.width(6.dp))
-
-                    Text(
-                        text = "892 Likes",
-                        color = Color.Black
-
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(30.dp))
-
-                Text(
-                    text = "Comments",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // COMMENT CARD
-                Card(
-                    shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.White
-                    )
-                ) {
-
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-
-                        Text(
-                            text = "@jordan",
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1565FF)
-                        )
-
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        Text(
-                            text = "This perspective is beautifully written."
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Card(
-                    shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.White
-                    )
-                ) {
-
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-
-                        Text(
-                            text = "@sam",
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1565FF)
-                        )
-
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        Text(
-                            text = "I love the atmosphere created in this note."
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(30.dp))
 
                 // INPUT COMMENT
                 OutlinedTextField(

@@ -258,9 +258,23 @@ fun AppNav() {
             }
 
             // DETAIL
-            composable("detail") {
+            composable(
+                route = "detail/{title}/{desc}/{username}"
+            ) { backStackEntry ->
 
-                DetailScreen(navController)
+                DetailScreen(
+
+                    navController = navController,
+
+                    title = backStackEntry.arguments
+                        ?.getString("title") ?: "",
+
+                    desc = backStackEntry.arguments
+                        ?.getString("desc") ?: "",
+
+                    username = backStackEntry.arguments
+                        ?.getString("username") ?: ""
+                )
             }
         }
     }
