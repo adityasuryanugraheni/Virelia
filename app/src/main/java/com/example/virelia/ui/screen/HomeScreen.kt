@@ -33,20 +33,18 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.google.firebase.auth.FirebaseAuth
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.virelia.ui.viewmodel.HomeViewModel
 
 @Composable
 fun HomeScreen(
     onAddClick: () -> Unit,
-    onEditClick: (NoteEntity) -> Unit
+    onEditClick: (NoteEntity) -> Unit,
+    viewModel: HomeViewModel = viewModel()
 ) {
 
     val context = LocalContext.current
-    val db = DatabaseProvider.getDatabase(context)
-
-    // AMBIL DARI ROOM
-    val notes by db.noteDao()
-        .getAllNotes()
-        .collectAsState(initial = emptyList())
+    val notes by viewModel.notes.collectAsState()
 
     Scaffold(
 
@@ -101,7 +99,8 @@ fun HomeScreen(
 
                         onEditClick = {
                             onEditClick(note)
-                        }
+                        },
+                        viewModel = viewModel
                     )
                 }
 
@@ -160,11 +159,11 @@ fun SearchBar() {
 @Composable
 fun NoteCard(
     note: NoteEntity,
-    onEditClick: (NoteEntity) -> Unit
+    onEditClick: (NoteEntity) -> Unit,
+    viewModel: HomeViewModel
 ) {
 
     val context = LocalContext.current
-    val db = DatabaseProvider.getDatabase(context)
 
     var showMenu by remember {
         mutableStateOf(false)
@@ -270,24 +269,28 @@ fun NoteCard(
                                 "time" to note.time
                             )
 
-                            FirebaseFirestore.getInstance()
-                                .collection("stories")
-                                .add(noteData)
-                                .addOnSuccessListener {
+                            viewModel.shareNote(
 
-                                    CoroutineScope(Dispatchers.IO).launch {
+                                note = note,
 
-                                        db.noteDao().updateNote(
-                                            note.copy(isShared = true)
-                                        )
-                                    }
+                                onSuccess = {
 
                                     Toast.makeText(
                                         context,
                                         "Story berhasil di share",
                                         Toast.LENGTH_SHORT
                                     ).show()
+                                },
+
+                                onFailed = {
+
+                                    Toast.makeText(
+                                        context,
+                                        "Gagal share",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 }
+                            )
 
                         } else {
 
@@ -403,20 +406,7 @@ fun NoteCard(
 
                         showDeleteDialog = false
 
-                        CoroutineScope(Dispatchers.IO).launch {
-
-                            // HAPUS ROOM
-                            db.noteDao().deleteNote(note)
-
-                            // HAPUS FIRESTORE
-                            if (note.firestoreId.isNotEmpty()) {
-
-                                FirebaseFirestore.getInstance()
-                                    .collection("stories")
-                                    .document(note.firestoreId)
-                                    .delete()
-                            }
-                        }
+                        viewModel.deleteNote(note)
                     }
                 ) {
 
