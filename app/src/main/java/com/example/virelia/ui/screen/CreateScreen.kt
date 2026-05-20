@@ -23,32 +23,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
-import com.example.virelia.Database.DatabaseProvider
-import com.example.virelia.Database.NoteEntity
-import com.example.virelia.utils.isInternetAvailable
+import com.example.virelia.ui.viewmodel.CreateViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.virelia.ui.viewmodel.CreateViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateScreen(
 
     noteId: Int? = null,
+
     onBackClick: () -> Unit = {},
 
     viewModel: CreateViewModel = viewModel()
-){
+) {
+
     val note by viewModel.note.collectAsState()
 
     // AMBIL NOTE UNTUK EDIT
@@ -78,17 +73,19 @@ fun CreateScreen(
         }
     }
 
+    // IMAGE
     var selectedImageUri by remember {
         mutableStateOf<Uri?>(null)
     }
 
-    // IMAGE PICKER
-    val imageLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri ->
+    val imageLauncher =
+        rememberLauncherForActivityResult(
+            contract =
+                ActivityResultContracts.GetContent()
+        ) { uri ->
 
-        selectedImageUri = uri
-    }
+            selectedImageUri = uri
+        }
 
     Scaffold(
 
@@ -101,13 +98,15 @@ fun CreateScreen(
                 title = {
 
                     Text(
+
                         text =
                             if (note == null)
                                 "New Story"
                             else
                                 "Edit Story",
 
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight =
+                            FontWeight.SemiBold
                     )
                 },
 
@@ -118,7 +117,9 @@ fun CreateScreen(
                     ) {
 
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector =
+                                Icons.Default.ArrowBack,
+
                             contentDescription = null
                         )
                     }
@@ -130,36 +131,91 @@ fun CreateScreen(
 
                         onClick = {
 
+                            // SAVE ROOM DATABASE
                             viewModel.saveNote(
 
                                 note = note,
+
                                 title = title,
+
                                 content = content,
 
                                 onSuccess = {
 
-                                    onBackClick()
+                                    // =====================
+                                    // SHARE KE FIREBASE
+                                    // =====================
+
+                                    val userId =
+                                        FirebaseAuth
+                                            .getInstance()
+                                            .currentUser
+                                            ?.uid ?: ""
+
+                                    val story =
+                                        hashMapOf(
+
+                                            "title" to title,
+
+                                            "desc" to content,
+
+                                            "time" to "Today",
+
+                                            "userId" to userId,
+
+                                            // LIKE SYSTEM
+                                            "likeCount" to 0,
+
+                                            "likedUsers" to
+                                                    listOf<String>()
+                                        )
+
+                                    FirebaseFirestore
+                                        .getInstance()
+                                        .collection("stories")
+                                        .add(story)
+
+                                        .addOnSuccessListener {
+
+                                            onBackClick()
+                                        }
+
+                                        .addOnFailureListener {
+
+                                            onBackClick()
+                                        }
                                 }
                             )
                         }
                     ) {
 
                         Icon(
-                            imageVector = Icons.Default.Save,
+
+                            imageVector =
+                                Icons.Default.Save,
+
                             contentDescription = null,
+
                             tint = Color(0xFF1565FF)
                         )
 
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(
+                            modifier = Modifier.width(6.dp)
+                        )
 
                         Text(
+
                             text = "Save",
+
                             color = Color(0xFF1565FF),
+
                             fontWeight = FontWeight.Bold
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(10.dp))
+                    Spacer(
+                        modifier = Modifier.width(10.dp)
+                    )
                 }
             )
         },
@@ -189,7 +245,10 @@ fun CreateScreen(
                 ) {
 
                     Icon(
-                        imageVector = Icons.Default.FormatBold,
+
+                        imageVector =
+                            Icons.Default.FormatBold,
+
                         contentDescription = null
                     )
                 }
@@ -204,6 +263,7 @@ fun CreateScreen(
                 ) {
 
                     Icon(
+
                         imageVector =
                             Icons.Default.AddPhotoAlternate,
 
@@ -219,7 +279,10 @@ fun CreateScreen(
                 ) {
 
                     Icon(
-                        imageVector = Icons.Default.InsertLink,
+
+                        imageVector =
+                            Icons.Default.InsertLink,
+
                         contentDescription = null
                     )
                 }
@@ -239,15 +302,23 @@ fun CreateScreen(
                 )
         ) {
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(
+                modifier = Modifier.height(20.dp)
+            )
 
             Text(
-                text = "Created March 24, 2025 • Personal",
+
+                text =
+                    "Created March 24, 2025 • Personal",
+
                 color = Color.Gray,
+
                 fontSize = 12.sp
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(
+                modifier = Modifier.height(24.dp)
+            )
 
             // TITLE
             BasicTextField(
@@ -263,7 +334,9 @@ fun CreateScreen(
                 textStyle = TextStyle(
 
                     fontSize = 30.sp,
+
                     fontWeight = FontWeight.Bold,
+
                     color = Color.Black
                 ),
 
@@ -279,7 +352,8 @@ fun CreateScreen(
 
                             fontSize = 30.sp,
 
-                            fontWeight = FontWeight.Bold
+                            fontWeight =
+                                FontWeight.Bold
                         )
                     }
 
@@ -287,7 +361,9 @@ fun CreateScreen(
                 }
             )
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(
+                modifier = Modifier.height(20.dp)
+            )
 
             // CONTENT
             BasicTextField(
@@ -329,7 +405,9 @@ fun CreateScreen(
                 }
             )
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(
+                modifier = Modifier.height(20.dp)
+            )
 
             // IMAGE
             selectedImageUri?.let { uri ->
@@ -351,10 +429,14 @@ fun CreateScreen(
                     contentScale = ContentScale.Crop
                 )
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(
+                    modifier = Modifier.height(20.dp)
+                )
             }
 
-            Spacer(modifier = Modifier.height(100.dp))
+            Spacer(
+                modifier = Modifier.height(100.dp)
+            )
         }
     }
 }

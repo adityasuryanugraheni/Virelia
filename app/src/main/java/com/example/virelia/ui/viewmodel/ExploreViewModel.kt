@@ -34,7 +34,7 @@ class ExploreViewModel(application: Application)
 
             val currentNote = updatedList[index]
 
-            updatedList[index] = currentNote.copy(
+            val updatedNote = currentNote.copy(
 
                 isLiked = !currentNote.isLiked,
 
@@ -45,7 +45,23 @@ class ExploreViewModel(application: Application)
                         currentNote.likeCount + 1
             )
 
+            updatedList[index] = updatedNote
+
             _publicStories.value = updatedList
+
+            // UPDATE FIREBASE
+            FirebaseFirestore.getInstance()
+                .collection("stories")
+                .document(updatedNote.firestoreId)
+                .update(
+
+                    mapOf(
+
+                        "isLiked" to updatedNote.isLiked,
+
+                        "likeCount" to updatedNote.likeCount
+                    )
+                )
         }
     }
 
@@ -90,7 +106,15 @@ class ExploreViewModel(application: Application)
                             firestoreId =
                                 document.id,
 
-                            isShared = true
+                            isShared = true,
+
+                            likeCount =
+                                document.getLong("likeCount")
+                                    ?.toInt() ?: 0,
+
+                            isLiked =
+                                document.getBoolean("isLiked")
+                                    ?: false
                         )
 
                         stories.add(note)

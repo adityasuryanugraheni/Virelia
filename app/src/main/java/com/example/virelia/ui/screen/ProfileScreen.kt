@@ -41,6 +41,10 @@ fun ProfileScreen(
 
     val imageUri by viewModel.imageUri
 
+    val profileImageUrl by viewModel.profileImageUrl
+
+    val totalLikes by viewModel.totalLikes
+
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -56,6 +60,7 @@ fun ProfileScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
+        // TOP TITLE
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -77,16 +82,28 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(90.dp))
 
+        // FOTO PROFILE
         Box(
             contentAlignment = Alignment.BottomEnd
         ) {
 
             Image(
                 painter =
-                    if (imageUri != null)
-                        rememberAsyncImagePainter(imageUri)
-                    else
-                        painterResource(id = R.drawable.profile),
+
+                    when {
+
+                        imageUri != null ->
+
+                            rememberAsyncImagePainter(imageUri)
+
+                        profileImageUrl.isNotEmpty() ->
+
+                            rememberAsyncImagePainter(profileImageUrl)
+
+                        else ->
+
+                            painterResource(id = R.drawable.profile)
+                    },
 
                 contentDescription = "Profile",
 
@@ -97,6 +114,7 @@ fun ProfileScreen(
                 contentScale = ContentScale.Crop
             )
 
+            // BUTTON EDIT FOTO
             Box(
                 modifier = Modifier
                     .size(32.dp)
@@ -122,8 +140,13 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        // USERNAME
         Text(
-            text = username,
+            text =
+                if (username.isEmpty())
+                    "No Username"
+                else
+                    username,
 
             fontSize = 24.sp,
 
@@ -132,8 +155,13 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(4.dp))
 
+        // EMAIL
         Text(
-            text = email,
+            text =
+                if (email.isEmpty())
+                    "No Email"
+                else
+                    email,
 
             color = Color.Gray,
 
@@ -142,6 +170,7 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // STATISTIK
         Row(
             modifier = Modifier.fillMaxWidth(),
 
@@ -153,13 +182,14 @@ fun ProfileScreen(
 
             ProfileStat("48", "Public")
 
-            ProfileStat("892", "Likes")
+            ProfileStat(totalLikes.toString(), "Likes")
 
             ProfileStat("1.2k", "Comment")
         }
 
         Spacer(modifier = Modifier.height(40.dp))
 
+        // BUTTON LOGOUT
         OutlinedButton(
 
             onClick = {
@@ -219,7 +249,9 @@ fun ProfileStat(
 
             color = Color(0xFF2979FF),
 
-            fontSize = 18.sp
+            fontSize = 18.sp,
+
+            fontWeight = FontWeight.Bold
         )
 
         Text(

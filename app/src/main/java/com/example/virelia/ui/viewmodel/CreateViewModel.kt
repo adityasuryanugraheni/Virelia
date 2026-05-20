@@ -76,8 +76,33 @@ class CreateViewModel(application: Application)
                     isShared = false
                 )
 
-                // ROOM ONLY
+                // ROOM
                 db.noteDao().insertNote(newNote)
+
+                // FIRESTORE
+                if (isInternetAvailable(getApplication())) {
+
+                    val noteData = hashMapOf(
+
+                        "title" to title,
+
+                        "desc" to content,
+
+                        "time" to "Today",
+
+                        "userId" to userId,
+
+                        "likeCount" to 0,
+
+                        "isLiked" to false
+                    )
+
+                    FirebaseFirestore
+                        .getInstance()
+                        .collection("stories")
+                        .document(firestoreId)
+                        .set(noteData)
+                }
 
             } else {
 
@@ -100,9 +125,16 @@ class CreateViewModel(application: Application)
                     val noteData = hashMapOf(
 
                         "title" to title,
+
                         "desc" to content,
+
                         "time" to updatedNote.time,
-                        "userId" to updatedNote.userId
+
+                        "userId" to updatedNote.userId,
+
+                        "likeCount" to updatedNote.likeCount,
+
+                        "isLiked" to updatedNote.isLiked
                     )
 
                     FirebaseFirestore
