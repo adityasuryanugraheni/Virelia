@@ -1,5 +1,3 @@
-// HOMEVIEWMODEL.KT
-
 package com.example.virelia.ui.viewmodel
 
 import android.app.Application
@@ -19,12 +17,17 @@ class HomeViewModel(application: Application)
     private val db =
         DatabaseProvider.getDatabase(application)
 
+    private val firestore =
+        FirebaseFirestore.getInstance()
+
     private val currentUserId =
         FirebaseAuth.getInstance()
             .currentUser
             ?.uid ?: ""
 
+    // =========================
     // ROOM → UI
+    // =========================
     val notes =
         db.noteDao()
             .getNotesByUser(currentUserId)
@@ -34,7 +37,9 @@ class HomeViewModel(application: Application)
                 initialValue = emptyList()
             )
 
+    // =========================
     // DELETE NOTE
+    // =========================
     fun deleteNote(note: NoteEntity) {
 
         viewModelScope.launch {
@@ -44,12 +49,11 @@ class HomeViewModel(application: Application)
 
             // DELETE FIRESTORE
             if (
-                note.isShared
-                &&
+                note.isShared &&
                 note.firestoreId.isNotEmpty()
             ) {
 
-                FirebaseFirestore.getInstance()
+                firestore
                     .collection("stories")
                     .document(note.firestoreId)
                     .delete()
@@ -57,39 +61,107 @@ class HomeViewModel(application: Application)
         }
     }
 
+    // =========================
     // SHARE NOTE
+    // =========================
     fun shareNote(
         note: NoteEntity,
         onSuccess: () -> Unit,
         onFailed: () -> Unit
     ) {
 
-        val noteData = hashMapOf(
+        // AMBIL USERNAME DARI COLLECTION USERS
+        firestore
+            .collection("users")
+            .document(currentUserId)
+            .get()
 
-            "title" to note.title,
-            "desc" to note.desc,
-            "time" to note.time,
-            "userId" to currentUserId
-        )
+            .addOnSuccessListener { userDoc ->
 
-        FirebaseFirestore.getInstance()
-            .collection("stories")
-            .document(note.firestoreId)
-            .set(noteData)
+                val username =
+                    userDoc.getString("username")
+                        ?: "Unknown"
 
-            .addOnSuccessListener {
+                val noteData = hashMapOf(
 
-                viewModelScope.launch {
+                    "title" to note.title,
 
-                    db.noteDao().updateNote(
+                    "desc" to note.desc,
 
-                        note.copy(
-                            isShared = true
-                        )
-                    )
+                    "time" to note.time,
+
+                    "userId" to currentUserId,
+
+                    "username" to username,
+
+                    "likeCount" to note.likeCount,
+
+                    "isLiked" to note.isLiked
+                )
+
+                // =========================
+                // JIKA BELUM PERNAH DISHARE
+                // =========================
+                if (note.firestoreId.isEmpty()) {
+
+                    firestore
+                        .collection("stories")
+                        .add(noteData)
+
+                        .addOnSuccessListener { document ->
+
+                            viewModelScope.launch {
+
+                                db.noteDao().updateNote(
+
+                                    note.copy(
+
+                                        isShared = true,
+
+                                        firestoreId =
+                                            document.id
+                                    )
+                                )
+                            }
+
+                            onSuccess()
+                        }
+
+                        .addOnFailureListener {
+
+                            onFailed()
+                        }
+
+                } else {
+
+                    // =========================
+                    // UPDATE STORY
+                    // =========================
+                    firestore
+                        .collection("stories")
+                        .document(note.firestoreId)
+                        .set(noteData)
+
+                        .addOnSuccessListener {
+
+                            viewModelScope.launch {
+
+                                db.noteDao().updateNote(
+
+                                    note.copy(
+                                        isShared = true
+                                    )
+                                )
+                            }
+
+                            onSuccess()
+                        }
+
+                        .addOnFailureListener {
+
+                            onFailed()
+                        }
                 }
-
-                onSuccess()
             }
 
             .addOnFailureListener {
@@ -98,10 +170,12 @@ class HomeViewModel(application: Application)
             }
     }
 
+    // =========================
     // SYNC FIRESTORE → ROOM
+    // =========================
     fun syncStories() {
 
-        FirebaseFirestore.getInstance()
+        firestore
             .collection("stories")
             .whereEqualTo("userId", currentUserId)
             .get()
@@ -110,34 +184,48 @@ class HomeViewModel(application: Application)
 
                 viewModelScope.launch {
 
+                    val currentNotes =
+                        notes.value
+
                     for (document in result) {
 
                         val firestoreId =
                             document.id
 
-                        // CEK APAKAH NOTE SUDAH ADA
-                        val existingNotes =
-                            notes.value
+                        val title =
+                            document.getString("title")
+                                ?: ""
 
+                        val desc =
+                            document.getString("desc")
+                                ?: ""
+
+                        // =========================
+                        // CEK DUPLIKAT
+                        // =========================
                         val alreadyExists =
-                            existingNotes.any {
+                            currentNotes.any {
 
-                                it.firestoreId ==
-                                        firestoreId
+                                // SUDAH ADA FIRESTORE ID
+                                it.firestoreId == firestoreId ||
+
+                                        // ATAU TITLE & DESC SAMA
+                                        (
+                                                it.title == title &&
+                                                        it.desc == desc
+                                                )
                             }
 
-                        // JIKA BELUM ADA → INSERT
+                        // =========================
+                        // INSERT JIKA BELUM ADA
+                        // =========================
                         if (!alreadyExists) {
 
                             val note = NoteEntity(
 
-                                title =
-                                    document.getString("title")
-                                        ?: "",
+                                title = title,
 
-                                desc =
-                                    document.getString("desc")
-                                        ?: "",
+                                desc = desc,
 
                                 time =
                                     document.getString("time")
@@ -147,10 +235,22 @@ class HomeViewModel(application: Application)
                                     document.getString("userId")
                                         ?: "",
 
+                                username =
+                                    document.getString("username")
+                                        ?: "",
+
                                 firestoreId =
                                     firestoreId,
 
-                                isShared = true
+                                isShared = true,
+
+                                likeCount =
+                                    document.getLong("likeCount")
+                                        ?.toInt() ?: 0,
+
+                                isLiked =
+                                    document.getBoolean("isLiked")
+                                        ?: false
                             )
 
                             db.noteDao()

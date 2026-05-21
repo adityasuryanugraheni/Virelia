@@ -1,13 +1,13 @@
-// CREATEVIEWMODEL.KT
-
 package com.example.virelia.ui.viewmodel
 
 import android.app.Application
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.virelia.Database.DatabaseProvider
 import com.example.virelia.Database.NoteEntity
-import com.example.virelia.utils.isInternetAvailable
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,30 +20,47 @@ class CreateViewModel(application: Application)
     private val db =
         DatabaseProvider.getDatabase(application)
 
+    private val firestore =
+        FirebaseFirestore.getInstance()
+
     private val _note =
         MutableStateFlow<NoteEntity?>(null)
 
     val note: StateFlow<NoteEntity?> = _note
 
+    // CEGAH DOUBLE SAVE
+    var isSaving by mutableStateOf(false)
+        private set
+
+    // =========================
     // AMBIL NOTE
+    // =========================
     fun getNote(noteId: Int) {
 
         viewModelScope.launch {
 
             val data =
-                db.noteDao().getNoteById(noteId)
+                db.noteDao()
+                    .getNoteById(noteId)
 
             _note.value = data
         }
     }
 
+    // =========================
     // SAVE NOTE
+    // =========================
     fun saveNote(
         note: NoteEntity?,
         title: String,
         content: String,
         onSuccess: () -> Unit
     ) {
+
+        // CEGAH DOUBLE CLICK
+        if (isSaving) return
+
+        isSaving = true
 
         viewModelScope.launch {
 
@@ -53,73 +70,52 @@ class CreateViewModel(application: Application)
                     .currentUser
                     ?.uid ?: ""
 
-            // CREATE
+            // =========================
+            // CREATE NOTE
+            // =========================
             if (note == null) {
-
-                val firestoreId =
-                    FirebaseFirestore
-                        .getInstance()
-                        .collection("stories")
-                        .document()
-                        .id
 
                 val newNote = NoteEntity(
 
                     title = title,
+
                     desc = content,
+
                     time = "Today",
 
                     userId = userId,
 
-                    firestoreId = firestoreId,
+                    // BELUM DISHARE
+                    firestoreId = "",
 
                     isShared = false
                 )
 
-                // ROOM
-                db.noteDao().insertNote(newNote)
-
-                // FIRESTORE
-                if (isInternetAvailable(getApplication())) {
-
-                    val noteData = hashMapOf(
-
-                        "title" to title,
-
-                        "desc" to content,
-
-                        "time" to "Today",
-
-                        "userId" to userId,
-
-                        "likeCount" to 0,
-
-                        "isLiked" to false
-                    )
-
-                    FirebaseFirestore
-                        .getInstance()
-                        .collection("stories")
-                        .document(firestoreId)
-                        .set(noteData)
-                }
+                // ROOM ONLY
+                db.noteDao()
+                    .insertNote(newNote)
 
             } else {
 
+                // =========================
+                // UPDATE NOTE
+                // =========================
                 val updatedNote = note.copy(
 
                     title = title,
+
                     desc = content
                 )
 
                 // UPDATE ROOM
-                db.noteDao().updateNote(updatedNote)
+                db.noteDao()
+                    .updateNote(updatedNote)
 
                 // UPDATE FIRESTORE
+                // HANYA JIKA SUDAH DISHARE
                 if (
-                    updatedNote.isShared
-                    &&
-                    isInternetAvailable(getApplication())
+                    updatedNote.isShared &&
+                    updatedNote.firestoreId.isNotEmpty()
                 ) {
 
                     val noteData = hashMapOf(
@@ -137,13 +133,14 @@ class CreateViewModel(application: Application)
                         "isLiked" to updatedNote.isLiked
                     )
 
-                    FirebaseFirestore
-                        .getInstance()
+                    firestore
                         .collection("stories")
                         .document(updatedNote.firestoreId)
                         .set(noteData)
                 }
             }
+
+            isSaving = false
 
             onSuccess()
         }

@@ -30,8 +30,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.virelia.ui.viewmodel.CreateViewModel
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,15 +44,23 @@ fun CreateScreen(
 
     val note by viewModel.note.collectAsState()
 
-    // AMBIL NOTE UNTUK EDIT
+    // =========================
+    // LOAD NOTE UNTUK EDIT
+    // =========================
     LaunchedEffect(noteId) {
 
-        if (noteId != null && noteId != -1) {
+        if (
+            noteId != null &&
+            noteId != -1
+        ) {
 
             viewModel.getNote(noteId)
         }
     }
 
+    // =========================
+    // STATE
+    // =========================
     var title by remember {
         mutableStateOf("")
     }
@@ -63,7 +69,9 @@ fun CreateScreen(
         mutableStateOf("")
     }
 
-    // SET DATA KE FIELD
+    // =========================
+    // SET DATA EDIT
+    // =========================
     LaunchedEffect(note) {
 
         note?.let {
@@ -73,20 +81,27 @@ fun CreateScreen(
         }
     }
 
-    // IMAGE
+    // =========================
+    // IMAGE PICKER
+    // =========================
     var selectedImageUri by remember {
         mutableStateOf<Uri?>(null)
     }
 
     val imageLauncher =
         rememberLauncherForActivityResult(
+
             contract =
                 ActivityResultContracts.GetContent()
+
         ) { uri ->
 
             selectedImageUri = uri
         }
 
+    // =========================
+    // UI
+    // =========================
     Scaffold(
 
         containerColor = Color(0xFFF5F5F7),
@@ -117,6 +132,7 @@ fun CreateScreen(
                     ) {
 
                         Icon(
+
                             imageVector =
                                 Icons.Default.ArrowBack,
 
@@ -129,9 +145,20 @@ fun CreateScreen(
 
                     TextButton(
 
+                        enabled =
+                            !viewModel.isSaving,
+
                         onClick = {
 
-                            // SAVE ROOM DATABASE
+                            // VALIDASI
+                            if (
+                                title.isBlank() ||
+                                content.isBlank()
+                            ) {
+                                return@TextButton
+                            }
+
+                            // SAVE NOTE
                             viewModel.saveNote(
 
                                 note = note,
@@ -142,48 +169,7 @@ fun CreateScreen(
 
                                 onSuccess = {
 
-                                    // =====================
-                                    // SHARE KE FIREBASE
-                                    // =====================
-
-                                    val userId =
-                                        FirebaseAuth
-                                            .getInstance()
-                                            .currentUser
-                                            ?.uid ?: ""
-
-                                    val story =
-                                        hashMapOf(
-
-                                            "title" to title,
-
-                                            "desc" to content,
-
-                                            "time" to "Today",
-
-                                            "userId" to userId,
-
-                                            // LIKE SYSTEM
-                                            "likeCount" to 0,
-
-                                            "likedUsers" to
-                                                    listOf<String>()
-                                        )
-
-                                    FirebaseFirestore
-                                        .getInstance()
-                                        .collection("stories")
-                                        .add(story)
-
-                                        .addOnSuccessListener {
-
-                                            onBackClick()
-                                        }
-
-                                        .addOnFailureListener {
-
-                                            onBackClick()
-                                        }
+                                    onBackClick()
                                 }
                             )
                         }
@@ -205,7 +191,11 @@ fun CreateScreen(
 
                         Text(
 
-                            text = "Save",
+                            text =
+                                if (viewModel.isSaving)
+                                    "Saving..."
+                                else
+                                    "Save",
 
                             color = Color(0xFF1565FF),
 
@@ -220,6 +210,9 @@ fun CreateScreen(
             )
         },
 
+        // =========================
+        // BOTTOM BAR
+        // =========================
         bottomBar = {
 
             Row(
@@ -228,7 +221,9 @@ fun CreateScreen(
                     .fillMaxWidth()
                     .background(Color.White)
                     .padding(
+
                         horizontal = 18.dp,
+
                         vertical = 10.dp
                     ),
 
@@ -258,7 +253,9 @@ fun CreateScreen(
 
                     onClick = {
 
-                        imageLauncher.launch("image/*")
+                        imageLauncher.launch(
+                            "image/*"
+                        )
                     }
                 ) {
 
@@ -320,7 +317,9 @@ fun CreateScreen(
                 modifier = Modifier.height(24.dp)
             )
 
+            // =========================
             // TITLE
+            // =========================
             BasicTextField(
 
                 value = title,
@@ -329,13 +328,15 @@ fun CreateScreen(
                     title = it
                 },
 
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth(),
 
                 textStyle = TextStyle(
 
                     fontSize = 30.sp,
 
-                    fontWeight = FontWeight.Bold,
+                    fontWeight =
+                        FontWeight.Bold,
 
                     color = Color.Black
                 ),
@@ -365,7 +366,9 @@ fun CreateScreen(
                 modifier = Modifier.height(20.dp)
             )
 
+            // =========================
             // CONTENT
+            // =========================
             BasicTextField(
 
                 value = content,
@@ -409,7 +412,9 @@ fun CreateScreen(
                 modifier = Modifier.height(20.dp)
             )
 
-            // IMAGE
+            // =========================
+            // IMAGE PREVIEW
+            // =========================
             selectedImageUri?.let { uri ->
 
                 Image(
@@ -426,7 +431,8 @@ fun CreateScreen(
                             RoundedCornerShape(20.dp)
                         ),
 
-                    contentScale = ContentScale.Crop
+                    contentScale =
+                        ContentScale.Crop
                 )
 
                 Spacer(

@@ -103,6 +103,10 @@ class ExploreViewModel(application: Application)
                                 document.getString("userId")
                                     ?: "",
 
+                            username =
+                                document.getString("username")
+                                    ?: "Unknown",
+
                             firestoreId =
                                 document.id,
 

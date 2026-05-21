@@ -39,4 +39,9 @@ interface NoteDao {
     // TAMBAHAN
     @Query("DELETE FROM notes WHERE userId = :userId")
     suspend fun deleteNotesByUser(userId: String)
+
+    @Query("SELECT * FROM notes WHERE firestoreId = :id LIMIT 1")
+    suspend fun getNoteByFirestoreId(
+        id: String
+    ): NoteEntity?
 }

@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -45,14 +46,23 @@ fun HomeScreen(
 
     val context = LocalContext.current
     val notes by viewModel.notes.collectAsState()
+    var synced by rememberSaveable {
+        mutableStateOf(false)
+    }
 
     LaunchedEffect(Unit) {
 
-        if (isInternetAvailable(context)) {
+        if (
+            !synced &&
+            isInternetAvailable(context)
+        ) {
+
+            synced = true
 
             viewModel.syncStories()
         }
     }
+
 
     Scaffold(
 

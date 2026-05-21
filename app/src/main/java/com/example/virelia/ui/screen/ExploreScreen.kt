@@ -102,7 +102,7 @@ fun ExploreScreen(
 
                         navController = navController,
 
-                        username = note.userId,
+                        username = note.username,
                         title = note.title,
                         desc = note.desc,
                         time = note.time,
