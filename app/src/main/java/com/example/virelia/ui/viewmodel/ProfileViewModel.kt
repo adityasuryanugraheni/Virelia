@@ -1,13 +1,25 @@
 package com.example.virelia.viewmodel
 
+import android.app.Application
 import android.net.Uri
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.virelia.Database.DatabaseProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
-class ProfileViewModel : ViewModel() {
-    //PROFIL
+class ProfileViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val db = DatabaseProvider.getDatabase(application)
+
+    // LOGOUT DIALOG
+    var showLogoutDialog = mutableStateOf(false)
+        private set
+
+    // PROFIL
     var profileImageUrl = mutableStateOf("")
         private set
 
@@ -27,107 +39,95 @@ class ProfileViewModel : ViewModel() {
     var totalLikes = mutableStateOf(0)
         private set
 
+    // TOTAL NOTES
+    var totalNotes = mutableStateOf(0)
+        private set
+
+    // TOTAL PUBLIC
+    var totalPublic = mutableStateOf(0)
+        private set
+
     // FIREBASE
     private val auth = FirebaseAuth.getInstance()
-
-    private val db = FirebaseFirestore.getInstance()
+    private val firestore = FirebaseFirestore.getInstance()
 
     init {
-
         getUserData()
-
         loadTotalLikes()
+        loadTotalNotes()
+        loadTotalPublic()
     }
 
     // AMBIL DATA USER
     private fun getUserData() {
-
         val currentUser = auth.currentUser
-
         currentUser?.uid?.let { uid ->
-
-            println("UID LOGIN = $uid")
-
-            db.collection("users")
+            firestore.collection("users")
                 .document(uid)
                 .get()
-
                 .addOnSuccessListener { document ->
-
-                    username.value =
-                        document.getString("username")
-                            ?: "No Username"
-
-                    email.value =
-                        document.getString("email")
-                            ?: "No Email"
-
-                    profileImageUrl.value =
-                        document.getString("profileImage")
-                            ?: ""
-
-                    println("USERNAME = ${username.value}")
+                    username.value = document.getString("username") ?: "No Username"
+                    email.value = document.getString("email") ?: "No Email"
+                    profileImageUrl.value = document.getString("profileImage") ?: ""
                 }
         }
     }
 
     // HITUNG TOTAL LIKE
     fun loadTotalLikes() {
-
-        val uid =
-            FirebaseAuth.getInstance()
-                .currentUser?.uid ?: return
-
-        FirebaseFirestore.getInstance()
-            .collection("stories")
+        val uid = auth.currentUser?.uid ?: return
+        firestore.collection("stories")
             .whereEqualTo("userId", uid)
             .get()
-
             .addOnSuccessListener { result ->
-
                 var total = 0
-
                 for (document in result) {
-
-                    total +=
-                        document.getLong("likeCount")
-                            ?.toInt() ?: 0
+                    total += document.getLong("likeCount")?.toInt() ?: 0
                 }
-
                 totalLikes.value = total
             }
     }
 
+    // HITUNG TOTAL NOTES DARI ROOM
+    fun loadTotalNotes() {
+        val uid = auth.currentUser?.uid ?: return
+        viewModelScope.launch {
+            totalNotes.value = db.noteDao().countNotesByUser(uid)
+        }
+    }
+
+    // HITUNG TOTAL PUBLIC DARI ROOM
+    fun loadTotalPublic() {
+        val uid = auth.currentUser?.uid ?: return
+        viewModelScope.launch {
+            totalPublic.value = db.noteDao().countPublicNotesByUser(uid)
+        }
+    }
+
     // UPDATE FOTO
     fun updateImage(uri: Uri?) {
-
         imageUri.value = uri
-
-        val uid =
-            auth.currentUser?.uid ?: return
-
-        db.collection("users")
+        val uid = auth.currentUser?.uid ?: return
+        firestore.collection("users")
             .document(uid)
-            .update(
-
-                "profileImage",
-                uri.toString()
-            )
-
+            .update("profileImage", uri.toString())
             .addOnSuccessListener {
-
-                profileImageUrl.value =
-                    uri.toString()
+                profileImageUrl.value = uri.toString()
             }
     }
 
-    // LOGOUT
-    fun logout(
-        onLogoutSuccess: () -> Unit
-    ) {
+    // LOGOUT DIALOG
+    fun onLogoutClick() {
+        showLogoutDialog.value = true
+    }
 
+    fun onLogoutDismiss() {
+        showLogoutDialog.value = false
+    }
+
+    fun onLogoutConfirm(onLogoutSuccess: () -> Unit) {
         auth.signOut()
-
+        showLogoutDialog.value = false
         onLogoutSuccess()
     }
 }

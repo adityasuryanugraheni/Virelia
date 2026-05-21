@@ -36,27 +36,45 @@ fun ProfileScreen(
 ) {
 
     val username by viewModel.username
-
     val email by viewModel.email
-
     val imageUri by viewModel.imageUri
-
     val profileImageUrl by viewModel.profileImageUrl
-
     val totalLikes by viewModel.totalLikes
+    val totalNotes by viewModel.totalNotes
+    val totalPublic by viewModel.totalPublic       // TAMBAH
+    val showLogoutDialog by viewModel.showLogoutDialog
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-
         viewModel.updateImage(uri)
+    }
+
+    // DIALOG KONFIRMASI LOGOUT
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.onLogoutDismiss() },
+            title = { Text("Logout") },
+            text = { Text("Apakah kamu yakin ingin logout?") },
+            confirmButton = {
+                TextButton(
+                    onClick = { viewModel.onLogoutConfirm { onLogout() } }
+                ) {
+                    Text("Iya", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.onLogoutDismiss() }) {
+                    Text("Tidak")
+                }
+            }
+        )
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFF5F5F5)),
-
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
@@ -65,17 +83,12 @@ fun ProfileScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 100.dp),
-
             horizontalArrangement = Arrangement.Center
         ) {
-
             Text(
                 text = "Profile",
-
                 fontSize = 30.sp,
-
                 fontWeight = FontWeight.Bold,
-
                 color = Color.Black
             )
         }
@@ -83,34 +96,17 @@ fun ProfileScreen(
         Spacer(modifier = Modifier.height(90.dp))
 
         // FOTO PROFILE
-        Box(
-            contentAlignment = Alignment.BottomEnd
-        ) {
-
+        Box(contentAlignment = Alignment.BottomEnd) {
             Image(
-                painter =
-
-                    when {
-
-                        imageUri != null ->
-
-                            rememberAsyncImagePainter(imageUri)
-
-                        profileImageUrl.isNotEmpty() ->
-
-                            rememberAsyncImagePainter(profileImageUrl)
-
-                        else ->
-
-                            painterResource(id = R.drawable.profile)
-                    },
-
+                painter = when {
+                    imageUri != null -> rememberAsyncImagePainter(imageUri)
+                    profileImageUrl.isNotEmpty() -> rememberAsyncImagePainter(profileImageUrl)
+                    else -> painterResource(id = R.drawable.profile)
+                },
                 contentDescription = "Profile",
-
                 modifier = Modifier
                     .size(110.dp)
                     .clip(CircleShape),
-
                 contentScale = ContentScale.Crop
             )
 
@@ -120,19 +116,12 @@ fun ProfileScreen(
                     .size(32.dp)
                     .clip(CircleShape)
                     .background(Color(0xFF2979FF))
-                    .clickable {
-
-                        launcher.launch("image/*")
-                    },
-
+                    .clickable { launcher.launch("image/*") },
                 contentAlignment = Alignment.Center
             ) {
-
                 Icon(
                     imageVector = Icons.Default.Edit,
-
                     contentDescription = "Edit",
-
                     tint = Color.White
                 )
             }
@@ -142,14 +131,8 @@ fun ProfileScreen(
 
         // USERNAME
         Text(
-            text =
-                if (username.isEmpty())
-                    "No Username"
-                else
-                    username,
-
+            text = if (username.isEmpty()) "No Username" else username,
             fontSize = 24.sp,
-
             fontWeight = FontWeight.Bold
         )
 
@@ -157,14 +140,8 @@ fun ProfileScreen(
 
         // EMAIL
         Text(
-            text =
-                if (email.isEmpty())
-                    "No Email"
-                else
-                    email,
-
+            text = if (email.isEmpty()) "No Email" else email,
             color = Color.Gray,
-
             fontSize = 14.sp
         )
 
@@ -173,17 +150,11 @@ fun ProfileScreen(
         // STATISTIK
         Row(
             modifier = Modifier.fillMaxWidth(),
-
-            horizontalArrangement =
-                Arrangement.SpaceEvenly
+            horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-
-            ProfileStat("124", "Notes")
-
-            ProfileStat("48", "Public")
-
+            ProfileStat(totalNotes.toString(), "Notes")
+            ProfileStat(totalPublic.toString(), "Public")  // DIUBAH
             ProfileStat(totalLikes.toString(), "Likes")
-
             ProfileStat("1.2k", "Comment")
         }
 
@@ -191,42 +162,24 @@ fun ProfileScreen(
 
         // BUTTON LOGOUT
         OutlinedButton(
-
-            onClick = {
-
-                viewModel.logout {
-
-                    onLogout()
-                }
-            },
-
+            onClick = { viewModel.onLogoutClick() },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
                 .height(52.dp),
-
             shape = RoundedCornerShape(12.dp),
-
-            colors =
-                ButtonDefaults.outlinedButtonColors(
-                    containerColor = Color.Red
-                )
+            colors = ButtonDefaults.outlinedButtonColors(
+                containerColor = Color.Red
+            )
         ) {
-
             Icon(
-                imageVector =
-                    Icons.Outlined.ExitToApp,
-
+                imageVector = Icons.Outlined.ExitToApp,
                 contentDescription = "Logout",
-
                 tint = Color.White
             )
-
             Spacer(modifier = Modifier.width(8.dp))
-
             Text(
                 text = "Logout",
-
                 color = Color.White
             )
         }
@@ -238,25 +191,15 @@ fun ProfileStat(
     number: String,
     title: String
 ) {
-
-    Column(
-        horizontalAlignment =
-            Alignment.CenterHorizontally
-    ) {
-
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = number,
-
             color = Color(0xFF2979FF),
-
             fontSize = 18.sp,
-
             fontWeight = FontWeight.Bold
         )
-
         Text(
             text = title,
-
             color = Color.Gray
         )
     }

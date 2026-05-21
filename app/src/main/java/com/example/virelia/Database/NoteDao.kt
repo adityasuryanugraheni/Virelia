@@ -28,6 +28,14 @@ interface NoteDao {
     @Query("SELECT * FROM notes WHERE userId = :userId")
     fun getNotesByUser(userId: String): Flow<List<NoteEntity>>
 
+    // HITUNG SEMUA NOTES USER
+    @Query("SELECT COUNT(*) FROM notes WHERE userId = :userId")
+    suspend fun countNotesByUser(userId: String): Int
+
+    // HITUNG NOTES PUBLIC USER
+    @Query("SELECT COUNT(*) FROM notes WHERE userId = :userId AND isShared = 1")
+    suspend fun countPublicNotesByUser(userId: String): Int
+
     // TAMBAHAN
     @Query("DELETE FROM notes WHERE userId = :userId")
     suspend fun deleteNotesByUser(userId: String)
