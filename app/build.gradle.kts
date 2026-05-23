@@ -97,4 +97,7 @@ dependencies {
 
     //TopAppBar
     implementation("androidx.compose.material3:material3")
+
+    // BOLD
+    implementation("com.mohamedrejeb.richeditor:richeditor-compose:1.0.0-rc13")
 }

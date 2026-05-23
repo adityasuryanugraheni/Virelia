@@ -8,13 +8,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.FormatBold
-import androidx.compose.material.icons.filled.InsertLink
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -30,6 +28,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.virelia.ui.viewmodel.CreateViewModel
+import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
+import com.mohamedrejeb.richeditor.model.rememberRichTextState
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.foundation.text.BasicTextField
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,8 +67,10 @@ fun CreateScreen(
         mutableStateOf("")
     }
 
-    var content by remember {
-        mutableStateOf("")
+    val state = rememberRichTextState()
+
+    var isBold by remember {
+        mutableStateOf(false)
     }
 
     // =========================
@@ -77,7 +81,7 @@ fun CreateScreen(
         note?.let {
 
             title = it.title
-            content = it.desc
+            state.setHtml(it.desc)
         }
     }
 
@@ -153,7 +157,7 @@ fun CreateScreen(
                             // VALIDASI
                             if (
                                 title.isBlank() ||
-                                content.isBlank()
+                                state.toHtml().isBlank()
                             ) {
                                 return@TextButton
                             }
@@ -165,7 +169,7 @@ fun CreateScreen(
 
                                 title = title,
 
-                                content = content,
+                                content = state.toHtml(),
 
                                 onSuccess = {
 
@@ -234,9 +238,18 @@ fun CreateScreen(
                     Alignment.CenterVertically
             ) {
 
-                // BOLD
+                //BOLD
                 IconButton(
-                    onClick = {}
+                    onClick = {
+
+                        isBold = !isBold
+
+                        state.toggleSpanStyle(
+                            SpanStyle(
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                    }
                 ) {
 
                     Icon(
@@ -244,7 +257,13 @@ fun CreateScreen(
                         imageVector =
                             Icons.Default.FormatBold,
 
-                        contentDescription = null
+                        contentDescription = null,
+
+                        tint =
+                            if (isBold)
+                                Color(0xFF1565FF)
+                            else
+                                Color.Gray
                     )
                 }
 
@@ -267,20 +286,6 @@ fun CreateScreen(
                         contentDescription = null,
 
                         tint = Color(0xFF1565FF)
-                    )
-                }
-
-                // LINK
-                IconButton(
-                    onClick = {}
-                ) {
-
-                    Icon(
-
-                        imageVector =
-                            Icons.Default.InsertLink,
-
-                        contentDescription = null
                     )
                 }
             }
@@ -367,82 +372,89 @@ fun CreateScreen(
             )
 
             // =========================
-            // CONTENT
-            // =========================
-            BasicTextField(
+// CONTENT
+// =========================
 
-                value = content,
-
-                onValueChange = {
-                    content = it
-                },
+            Box(
 
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 300.dp),
+                    .heightIn(min = 300.dp)
+            ) {
 
-                textStyle = TextStyle(
+                BasicRichTextEditor(
 
-                    fontSize = 18.sp,
+                    state = state,
 
-                    lineHeight = 28.sp,
-
-                    color = Color.Black
-                ),
-
-                decorationBox = { innerTextField ->
-
-                    if (content.isEmpty()) {
-
-                        Text(
-
-                            text = "Start writing...",
-
-                            color = Color.LightGray,
-
-                            fontSize = 18.sp
-                        )
-                    }
-
-                    innerTextField()
-                }
-            )
-
-            Spacer(
-                modifier = Modifier.height(20.dp)
-            )
-
-            // =========================
-            // IMAGE PREVIEW
-            // =========================
-            selectedImageUri?.let { uri ->
-
-                Image(
-
-                    painter =
-                        rememberAsyncImagePainter(uri),
-
-                    contentDescription = null,
+                    textStyle = TextStyle(
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 16.sp,
+                        color = Color.Black
+                    ),
 
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(220.dp)
-                        .clip(
-                            RoundedCornerShape(20.dp)
-                        ),
-
-                    contentScale =
-                        ContentScale.Crop
                 )
 
-                Spacer(
-                    modifier = Modifier.height(20.dp)
-                )
+                // PLACEHOLDER
+                if (
+                    state.toHtml()
+                        .replace("<p>", "")
+                        .replace("</p>", "")
+                        .replace("<br>", "")
+                        .trim()
+                        .isBlank()
+                ) {
+
+                    Text(
+
+                        text = "Write your story",
+
+                        color = Color.LightGray,
+
+                        fontSize = 16.sp,
+
+                        fontWeight = FontWeight.Bold,
+
+                        modifier = Modifier.padding(
+                            start = 2.dp,
+                            top = 2.dp
+                        )
+                    )
+                }
             }
 
-            Spacer(
-                modifier = Modifier.height(100.dp)
-            )
+                // =========================
+                // IMAGE PREVIEW
+                // =========================
+                selectedImageUri?.let { uri ->
+
+                    Image(
+
+                        painter =
+                            rememberAsyncImagePainter(uri),
+
+                        contentDescription = null,
+
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(220.dp)
+                            .clip(
+                                RoundedCornerShape(20.dp)
+                            ),
+
+                        contentScale =
+                            ContentScale.Crop
+                    )
+
+                    Spacer(
+                        modifier = Modifier.height(20.dp)
+                    )
+                }
+
+                Spacer(
+                    modifier = Modifier.height(100.dp)
+                )
+            }
         }
     }
-}
