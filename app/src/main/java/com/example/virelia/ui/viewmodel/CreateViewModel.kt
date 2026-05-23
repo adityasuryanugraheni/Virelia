@@ -13,6 +13,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class CreateViewModel(application: Application)
     : AndroidViewModel(application) {
@@ -81,7 +84,10 @@ class CreateViewModel(application: Application)
 
                     desc = content,
 
-                    time = "Today",
+                    time = SimpleDateFormat(
+                        "dd MMM yyyy, HH:mm",
+                        Locale.getDefault()
+                    ).format(Date()),
 
                     userId = userId,
 
@@ -130,7 +136,7 @@ class CreateViewModel(application: Application)
 
                         "likeCount" to updatedNote.likeCount,
 
-                        "isLiked" to updatedNote.isLiked
+                        "commentCount" to updatedNote.commentCount
                     )
 
                     firestore

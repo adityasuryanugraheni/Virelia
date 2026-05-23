@@ -30,6 +30,8 @@ import androidx.navigation.NavController
 import com.example.virelia.Database.NoteEntity
 import com.example.virelia.ui.viewmodel.ExploreViewModel
 import java.net.URLEncoder
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 
 @Composable
 fun ExploreScreen(
@@ -259,7 +261,11 @@ fun ExploreNoteCard(
                     Icon(
                         imageVector = Icons.Default.ChatBubbleOutline,
                         contentDescription = null,
-                        tint = Color.Gray
+                        tint =
+                            if (note.commentCount > 0)
+                                Color(0xFF1565FF)
+                            else
+                                Color.Gray
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
@@ -278,10 +284,20 @@ fun ExploreNoteCard(
                 ) {
                     Icon(
                         imageVector =
-                            if (note.isLiked) Icons.Default.Favorite
-                            else Icons.Default.FavoriteBorder,
+                            if (note.isLiked)
+                                Icons.Filled.Favorite
+                            else
+                                Icons.Filled.FavoriteBorder,
+
                         contentDescription = null,
-                        tint = if (note.isLiked) Color.Red else Color.Gray
+
+                        tint =
+                            if (note.isLiked)
+                                Color.Red
+                            else if (note.likeCount > 0)
+                                Color.Red
+                            else
+                                Color.Gray
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(

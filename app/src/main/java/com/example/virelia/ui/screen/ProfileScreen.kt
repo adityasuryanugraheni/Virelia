@@ -65,17 +65,17 @@ fun ProfileScreen(
         AlertDialog(
             onDismissRequest = { viewModel.onLogoutDismiss() },
             title = { Text("Logout") },
-            text = { Text("Apakah kamu yakin ingin logout?") },
+            text = { Text("Are you sure you want to exit the application?") },
             confirmButton = {
                 TextButton(
                     onClick = { viewModel.onLogoutConfirm { onLogout() } }
                 ) {
-                    Text("Iya", color = Color.Red)
+                    Text("Yes", color = Color.Red)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.onLogoutDismiss() }) {
-                    Text("Tidak")
+                    Text("No")
                 }
             }
         )

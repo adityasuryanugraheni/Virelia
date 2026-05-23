@@ -96,7 +96,7 @@ class HomeViewModel(application: Application)
 
                     "likeCount" to note.likeCount,
 
-                    "isLiked" to note.isLiked
+                    "commentCount" to note.commentCount
                 )
 
                 // =========================
@@ -216,45 +216,58 @@ class HomeViewModel(application: Application)
                                                 )
                             }
 
+                        val note = NoteEntity(
+
+                            title = title,
+
+                            desc = desc,
+
+                            time =
+                                document.getString("time")
+                                    ?: "",
+
+                            userId =
+                                document.getString("userId")
+                                    ?: "",
+
+                            username =
+                                document.getString("username")
+                                    ?: "",
+
+                            firestoreId =
+                                firestoreId,
+
+                            isShared = true,
+
+                            likeCount = document.getLong("likeCount")?.toInt() ?: 0,
+                            commentCount = document.getLong("commentCount")?.toInt() ?: 0
+                        )
+
                         // =========================
-                        // INSERT JIKA BELUM ADA
+                        // INSERT / UPDATE
                         // =========================
                         if (!alreadyExists) {
 
-                            val note = NoteEntity(
+                            db.noteDao().insertNote(note)
 
-                                title = title,
+                        } else {
 
-                                desc = desc,
+                            val existingNote = currentNotes.find {
+                                it.firestoreId == firestoreId
+                            }
 
-                                time =
-                                    document.getString("time")
-                                        ?: "",
+                            if (existingNote != null) {
 
-                                userId =
-                                    document.getString("userId")
-                                        ?: "",
+                                db.noteDao().updateNote(
 
-                                username =
-                                    document.getString("username")
-                                        ?: "",
+                                    existingNote.copy(
 
-                                firestoreId =
-                                    firestoreId,
+                                        likeCount = note.likeCount,
 
-                                isShared = true,
-
-                                likeCount =
-                                    document.getLong("likeCount")
-                                        ?.toInt() ?: 0,
-
-                                isLiked =
-                                    document.getBoolean("isLiked")
-                                        ?: false
-                            )
-
-                            db.noteDao()
-                                .insertNote(note)
+                                        commentCount = note.commentCount
+                                    )
+                                )
+                            }
                         }
                     }
                 }

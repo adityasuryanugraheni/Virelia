@@ -10,13 +10,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-
-data class CommentItem(
-    val userId: String = "",
-    val username: String = "",
-    val text: String = "",
-    val time: String = ""
-)
+import com.google.firebase.firestore.FieldValue
+import com.example.virelia.data.Comment
+import android.util.Log
 
 class ExploreViewModel(application: Application)
     : AndroidViewModel(application) {
@@ -28,9 +24,9 @@ class ExploreViewModel(application: Application)
 
     // KOMENTAR PER STORY
     private val _comments =
-        MutableStateFlow<List<CommentItem>>(emptyList())
+        MutableStateFlow<List<Comment>>(emptyList())
 
-    val comments: StateFlow<List<CommentItem>> = _comments
+    val comments: StateFlow<List<Comment>> = _comments
 
     // JUMLAH KOMENTAR PER STORY (firestoreId -> count)
     private val _commentCounts =
@@ -102,6 +98,9 @@ class ExploreViewModel(application: Application)
                             firestoreId = firestoreId,
                             isShared = true,
                             likeCount = likeCount,
+                            commentCount =
+                                document.getLong("commentCount")
+                                    ?.toInt() ?: 0,
                             isLiked = isLikedByMe
                         )
 
@@ -126,10 +125,11 @@ class ExploreViewModel(application: Application)
                 .await()
 
             val list = snapshot.documents.map { doc ->
-                CommentItem(
+                Comment(
                     userId = doc.getString("userId") ?: "",
                     username = doc.getString("username") ?: "Unknown",
-                    text = doc.getString("text") ?: "",
+                    comment = doc.getString("comment") ?: "",
+                    noteId = firestoreId,
                     time = doc.getString("time") ?: ""
                 )
             }
@@ -149,23 +149,24 @@ class ExploreViewModel(application: Application)
 
         viewModelScope.launch {
 
-            // AMBIL USERNAME DARI FIRESTORE
             val userDoc = firestore
                 .collection("users")
                 .document(uid)
                 .get()
                 .await()
 
-            val username = userDoc.getString("username") ?: "Unknown"
+            val username =
+                userDoc.getString("username")
+                    ?: "Unknown"
 
             val commentData = hashMapOf(
                 "userId" to uid,
                 "username" to username,
-                "text" to text,
+                "comment" to text,
                 "time" to System.currentTimeMillis().toString()
             )
 
-            // SIMPAN KE SUBCOLLECTION COMMENTS
+            // SIMPAN COMMENT
             firestore
                 .collection("stories")
                 .document(firestoreId)
@@ -173,12 +174,52 @@ class ExploreViewModel(application: Application)
                 .add(commentData)
                 .await()
 
+            // UPDATE COMMENT COUNT
+            val storyRef = firestore
+                .collection("stories")
+                .document(firestoreId)
+
+            Log.d("COMMENT_DEBUG", "FIRESTORE ID = $firestoreId")
+
+            try {
+
+                firestore
+                    .collection("stories")
+                    .document(firestoreId)
+                    .collection("comments")
+                    .add(commentData)
+                    .await()
+
+                Log.d("COMMENT_DEBUG", "COMMENT SAVED")
+
+                storyRef.update(
+                    "commentCount",
+                    FieldValue.increment(1)
+                ).await()
+
+                Log.d("COMMENT_DEBUG", "COMMENT COUNT UPDATED")
+
+            } catch (e: Exception) {
+
+                Log.e("COMMENT_DEBUG", "ERROR", e)
+            }
+
+            storyRef.update(
+                "commentCount",
+                com.google.firebase.firestore.FieldValue.increment(1)
+            ).await()
+
+            loadPublicStories()
+
             // RELOAD KOMENTAR
             loadComments(firestoreId)
 
-            // UPDATE COUNT LOKAL
-            val currentCounts = _commentCounts.value.toMutableMap()
-            currentCounts[firestoreId] = (currentCounts[firestoreId] ?: 0) + 1
+            val currentCounts =
+                _commentCounts.value.toMutableMap()
+
+            currentCounts[firestoreId] =
+                (currentCounts[firestoreId] ?: 0) + 1
+
             _commentCounts.value = currentCounts
 
             onDone()
@@ -191,6 +232,7 @@ class ExploreViewModel(application: Application)
 
         val updatedList = _publicStories.value.toMutableList()
         val index = updatedList.indexOf(note)
+
         if (index == -1) return
 
         val currentNote = updatedList[index]
@@ -207,16 +249,35 @@ class ExploreViewModel(application: Application)
         updatedList[index] = updatedNote
         _publicStories.value = updatedList
 
-        val likesRef = firestore
+        val storyRef = firestore
             .collection("stories")
             .document(note.firestoreId)
+
+        val likesRef = storyRef
             .collection("likes")
             .document(currentUserId)
 
         if (updatedNote.isLiked) {
+
+            // LIKE
             likesRef.set(mapOf("liked" to true))
+
+            // UPDATE TOTAL LIKE
+            storyRef.update(
+                "likeCount",
+                com.google.firebase.firestore.FieldValue.increment(1)
+            )
+
         } else {
+
+            // UNLIKE
             likesRef.delete()
+
+            // UPDATE TOTAL LIKE
+            storyRef.update(
+                "likeCount",
+                com.google.firebase.firestore.FieldValue.increment(-1)
+            )
         }
     }
 }

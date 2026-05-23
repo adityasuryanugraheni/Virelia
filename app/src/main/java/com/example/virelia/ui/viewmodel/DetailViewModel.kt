@@ -11,6 +11,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.example.virelia.data.Comment
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import com.google.firebase.firestore.FieldValue
 
 class DetailViewModel : ViewModel() {
 
@@ -54,6 +55,14 @@ class DetailViewModel : ViewModel() {
                     .document(firestoreId)
                     .collection("comments")
                     .add(data)
+                    .await()
+
+                db.collection("stories")
+                    .document(firestoreId)
+                    .update(
+                        "commentCount",
+                        FieldValue.increment(1)
+                    )
                     .await()
 
                 message = "Comment berhasil dikirim"

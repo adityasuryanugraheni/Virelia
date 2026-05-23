@@ -36,6 +36,7 @@ import kotlinx.coroutines.launch
 import com.google.firebase.auth.FirebaseAuth
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.virelia.ui.viewmodel.HomeViewModel
+import androidx.compose.foundation.BorderStroke
 
 @Composable
 fun HomeScreen(
@@ -46,19 +47,9 @@ fun HomeScreen(
 
     val context = LocalContext.current
     val notes by viewModel.notes.collectAsState()
-    var synced by rememberSaveable {
-        mutableStateOf(false)
-    }
 
     LaunchedEffect(Unit) {
-
-        if (
-            !synced &&
-            isInternetAvailable(context)
-        ) {
-
-            synced = true
-
+        if (isInternetAvailable(context)) {
             viewModel.syncStories()
         }
     }
@@ -341,21 +332,39 @@ fun NoteCard(
 
                 Row(
                     horizontalArrangement = Arrangement.End,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-
-                    Icon(
-                        imageVector = Icons.Default.ChatBubbleOutline,
-                        contentDescription = null
-                    )
-
-                    Spacer(modifier = Modifier.width(16.dp))
 
                     Icon(
                         imageVector = Icons.Default.FavoriteBorder,
                         contentDescription = null,
-                        tint = Color.Red
+                        tint =
+                            if (note.likeCount > 0)
+                                Color.Red
+                            else
+                                Color.Gray
                     )
+
+                    Spacer(modifier = Modifier.width(4.dp))
+
+                    Text("${note.likeCount}")
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Icon(
+                        imageVector = Icons.Default.ChatBubbleOutline,
+                        contentDescription = null,
+                        tint =
+                            if (note.commentCount > 0)
+                                Color(0xFF1565FF)
+                            else
+                                Color.Gray
+                    )
+
+                    Spacer(modifier = Modifier.width(4.dp))
+
+                    Text("${note.commentCount}")
                 }
             }
         }

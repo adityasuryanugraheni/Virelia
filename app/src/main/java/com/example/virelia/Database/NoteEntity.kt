@@ -26,5 +26,7 @@ data class NoteEntity(
 
     var isLiked: Boolean = false,
 
-    var likeCount: Int = 0
+    var likeCount: Int = 0,
+
+    var commentCount: Int = 0
 )
