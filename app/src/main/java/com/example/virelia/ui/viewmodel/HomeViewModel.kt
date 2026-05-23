@@ -10,6 +10,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class HomeViewModel(application: Application)
     : AndroidViewModel(application) {
@@ -25,9 +26,6 @@ class HomeViewModel(application: Application)
             .currentUser
             ?.uid ?: ""
 
-    // =========================
-    // ROOM → UI
-    // =========================
     val notes =
         db.noteDao()
             .getNotesByUser(currentUserId)
@@ -37,22 +35,10 @@ class HomeViewModel(application: Application)
                 initialValue = emptyList()
             )
 
-    // =========================
-    // DELETE NOTE
-    // =========================
     fun deleteNote(note: NoteEntity) {
-
         viewModelScope.launch {
-
-            // DELETE ROOM
             db.noteDao().deleteNote(note)
-
-            // DELETE FIRESTORE
-            if (
-                note.isShared &&
-                note.firestoreId.isNotEmpty()
-            ) {
-
+            if (note.isShared && note.firestoreId.isNotEmpty()) {
                 firestore
                     .collection("stories")
                     .document(note.firestoreId)
@@ -61,216 +47,138 @@ class HomeViewModel(application: Application)
         }
     }
 
-    // =========================
-    // SHARE NOTE
-    // =========================
     fun shareNote(
         note: NoteEntity,
         onSuccess: () -> Unit,
         onFailed: () -> Unit
     ) {
-
-        // AMBIL USERNAME DARI COLLECTION USERS
         firestore
             .collection("users")
             .document(currentUserId)
             .get()
-
             .addOnSuccessListener { userDoc ->
 
-                val username =
-                    userDoc.getString("username")
-                        ?: "Unknown"
+                val username = userDoc.getString("username") ?: "Unknown"
 
                 val noteData = hashMapOf(
-
                     "title" to note.title,
-
                     "desc" to note.desc,
-
                     "time" to note.time,
-
                     "userId" to currentUserId,
-
                     "username" to username,
-
                     "likeCount" to note.likeCount,
-
                     "commentCount" to note.commentCount
                 )
 
-                // =========================
-                // JIKA BELUM PERNAH DISHARE
-                // =========================
                 if (note.firestoreId.isEmpty()) {
-
                     firestore
                         .collection("stories")
                         .add(noteData)
-
                         .addOnSuccessListener { document ->
-
                             viewModelScope.launch {
-
                                 db.noteDao().updateNote(
-
                                     note.copy(
-
                                         isShared = true,
-
-                                        firestoreId =
-                                            document.id
+                                        firestoreId = document.id
                                     )
                                 )
                             }
-
                             onSuccess()
                         }
-
-                        .addOnFailureListener {
-
-                            onFailed()
-                        }
+                        .addOnFailureListener { onFailed() }
 
                 } else {
-
-                    // =========================
-                    // UPDATE STORY
-                    // =========================
                     firestore
                         .collection("stories")
                         .document(note.firestoreId)
                         .set(noteData)
-
                         .addOnSuccessListener {
-
                             viewModelScope.launch {
-
                                 db.noteDao().updateNote(
-
-                                    note.copy(
-                                        isShared = true
-                                    )
+                                    note.copy(isShared = true)
                                 )
                             }
-
                             onSuccess()
                         }
-
-                        .addOnFailureListener {
-
-                            onFailed()
-                        }
+                        .addOnFailureListener { onFailed() }
                 }
             }
-
-            .addOnFailureListener {
-
-                onFailed()
-            }
+            .addOnFailureListener { onFailed() }
     }
 
-    // =========================
-    // SYNC FIRESTORE → ROOM
-    // =========================
     fun syncStories() {
+        viewModelScope.launch {
+            try {
+                val result = firestore
+                    .collection("stories")
+                    .whereEqualTo("userId", currentUserId)
+                    .get()
+                    .await()
 
-        firestore
-            .collection("stories")
-            .whereEqualTo("userId", currentUserId)
-            .get()
+                val currentNotes = notes.value
 
-            .addOnSuccessListener { result ->
+                for (document in result) {
+                    val firestoreId = document.id
+                    val title = document.getString("title") ?: ""
+                    val desc = document.getString("desc") ?: ""
 
-                viewModelScope.launch {
+                    // HITUNG LANGSUNG DARI SUBCOLLECTION
+                    val commentsSnapshot = firestore
+                        .collection("stories")
+                        .document(firestoreId)
+                        .collection("comments")
+                        .get()
+                        .await()
 
-                    val currentNotes =
-                        notes.value
+                    val commentCount = commentsSnapshot.size()
 
-                    for (document in result) {
+                    // HITUNG LIKES DARI SUBCOLLECTION
+                    val likesSnapshot = firestore
+                        .collection("stories")
+                        .document(firestoreId)
+                        .collection("likes")
+                        .get()
+                        .await()
 
-                        val firestoreId =
-                            document.id
+                    val likeCount = likesSnapshot.size()
 
-                        val title =
-                            document.getString("title")
-                                ?: ""
+                    val alreadyExists = currentNotes.any {
+                        it.firestoreId == firestoreId ||
+                                (it.title == title && it.desc == desc)
+                    }
 
-                        val desc =
-                            document.getString("desc")
-                                ?: ""
+                    val note = NoteEntity(
+                        title = title,
+                        desc = desc,
+                        time = document.getString("time") ?: "",
+                        userId = document.getString("userId") ?: "",
+                        username = document.getString("username") ?: "",
+                        firestoreId = firestoreId,
+                        isShared = true,
+                        likeCount = likeCount,
+                        commentCount = commentCount
+                    )
 
-                        // =========================
-                        // CEK DUPLIKAT
-                        // =========================
-                        val alreadyExists =
-                            currentNotes.any {
-
-                                // SUDAH ADA FIRESTORE ID
-                                it.firestoreId == firestoreId ||
-
-                                        // ATAU TITLE & DESC SAMA
-                                        (
-                                                it.title == title &&
-                                                        it.desc == desc
-                                                )
-                            }
-
-                        val note = NoteEntity(
-
-                            title = title,
-
-                            desc = desc,
-
-                            time =
-                                document.getString("time")
-                                    ?: "",
-
-                            userId =
-                                document.getString("userId")
-                                    ?: "",
-
-                            username =
-                                document.getString("username")
-                                    ?: "",
-
-                            firestoreId =
-                                firestoreId,
-
-                            isShared = true,
-
-                            likeCount = document.getLong("likeCount")?.toInt() ?: 0,
-                            commentCount = document.getLong("commentCount")?.toInt() ?: 0
-                        )
-
-                        // =========================
-                        // INSERT / UPDATE
-                        // =========================
-                        if (!alreadyExists) {
-
-                            db.noteDao().insertNote(note)
-
-                        } else {
-
-                            val existingNote = currentNotes.find {
-                                it.firestoreId == firestoreId
-                            }
-
-                            if (existingNote != null) {
-
-                                db.noteDao().updateNote(
-
-                                    existingNote.copy(
-
-                                        likeCount = note.likeCount,
-
-                                        commentCount = note.commentCount
-                                    )
+                    if (!alreadyExists) {
+                        db.noteDao().insertNote(note)
+                    } else {
+                        val existingNote = currentNotes.find {
+                            it.firestoreId == firestoreId
+                        }
+                        if (existingNote != null) {
+                            db.noteDao().updateNote(
+                                existingNote.copy(
+                                    likeCount = likeCount,
+                                    commentCount = commentCount
                                 )
-                            }
+                            )
                         }
                     }
                 }
+
+            } catch (e: Exception) {
+                // silent fail
             }
+        }
     }
 }

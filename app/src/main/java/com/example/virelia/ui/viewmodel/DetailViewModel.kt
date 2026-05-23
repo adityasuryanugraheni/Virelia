@@ -11,7 +11,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.example.virelia.data.Comment
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import com.google.firebase.firestore.FieldValue
 
 class DetailViewModel : ViewModel() {
 
@@ -24,6 +23,9 @@ class DetailViewModel : ViewModel() {
 
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
+
+    val currentUserId: String
+        get() = auth.currentUser?.uid ?: ""
 
     fun postComment(firestoreId: String) {
 
@@ -57,14 +59,6 @@ class DetailViewModel : ViewModel() {
                     .add(data)
                     .await()
 
-                db.collection("stories")
-                    .document(firestoreId)
-                    .update(
-                        "commentCount",
-                        FieldValue.increment(1)
-                    )
-                    .await()
-
                 message = "Comment berhasil dikirim"
                 comment = ""
                 isLoading = false
@@ -91,6 +85,8 @@ class DetailViewModel : ViewModel() {
                 for (doc in snapshot.documents) {
                     commentList.add(
                         Comment(
+                            docId = doc.id,
+                            userId = doc.getString("userId") ?: "",
                             username = doc.getString("username") ?: "Unknown",
                             comment = doc.getString("text") ?: ""
                         )
@@ -99,6 +95,24 @@ class DetailViewModel : ViewModel() {
 
             } catch (e: Exception) {
                 message = "Gagal memuat komentar"
+            }
+        }
+    }
+
+    fun deleteComment(firestoreId: String, docId: String) {
+        viewModelScope.launch {
+            try {
+                db.collection("stories")
+                    .document(firestoreId)
+                    .collection("comments")
+                    .document(docId)
+                    .delete()
+                    .await()
+
+                getComments(firestoreId)
+
+            } catch (e: Exception) {
+                message = "Gagal menghapus komentar"
             }
         }
     }
