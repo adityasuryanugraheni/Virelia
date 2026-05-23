@@ -1,10 +1,12 @@
 package com.example.virelia.ui.viewmodel
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.google.firebase.firestore.FirebaseFirestore
+import com.example.virelia.data.Comment
 
 class DetailViewModel : ViewModel() {
 
@@ -18,9 +20,11 @@ class DetailViewModel : ViewModel() {
 
     var message by mutableStateOf("")
 
+    var commentList = mutableStateListOf<Comment>()
+
     private val db = FirebaseFirestore.getInstance()
 
-    fun postComment() {
+    fun postComment(title: String) {
 
         if (comment.isEmpty()) {
 
@@ -31,8 +35,17 @@ class DetailViewModel : ViewModel() {
 
         isLoading = true
 
+        val user = com.google.firebase.auth.FirebaseAuth
+            .getInstance()
+            .currentUser
+
+        val username =
+            user?.email ?: "Unknown"
+
         val data = hashMapOf(
-            "comment" to comment
+            "comment" to comment,
+            "noteId" to title,
+            "username" to username
         )
 
         db.collection("comments")
@@ -45,6 +58,8 @@ class DetailViewModel : ViewModel() {
                 message = "Comment berhasil dikirim"
 
                 comment = ""
+
+                getComments(title)
             }
 
             .addOnFailureListener {
@@ -52,6 +67,24 @@ class DetailViewModel : ViewModel() {
                 isLoading = false
 
                 message = "Gagal mengirim comment"
+            }
+    }
+
+    fun getComments(title: String) {
+
+        db.collection("comments")
+            .whereEqualTo("noteId", title)
+            .get()
+            .addOnSuccessListener { result ->
+
+                commentList.clear()
+
+                for (document in result) {
+
+                    val data = document.toObject(Comment::class.java)
+
+                    commentList.add(data)
+                }
             }
     }
 

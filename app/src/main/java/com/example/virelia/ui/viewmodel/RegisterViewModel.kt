@@ -9,6 +9,7 @@ import com.example.virelia.Database.UserEntity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
+import com.google.firebase.auth.userProfileChangeRequest
 
 class RegisterViewModel(
     application: Application
@@ -87,6 +88,12 @@ class RegisterViewModel(
         )
 
             .addOnSuccessListener {
+
+                val profileUpdates = userProfileChangeRequest {
+                    displayName = name
+                }
+
+                auth.currentUser?.updateProfile(profileUpdates)
 
                 // UID Firebase
                 val uid =

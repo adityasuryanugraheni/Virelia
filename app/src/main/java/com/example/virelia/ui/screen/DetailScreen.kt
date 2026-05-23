@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.virelia.ui.viewmodel.DetailViewModel
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun DetailScreen(
@@ -27,6 +28,18 @@ fun DetailScreen(
     username: String,
     viewModel: DetailViewModel = viewModel()
 ) {
+
+    val currentUser =
+        FirebaseAuth.getInstance().currentUser
+
+    val currentUsername =
+        currentUser?.displayName
+            ?: currentUser?.email
+            ?: "User"
+
+    LaunchedEffect(Unit) {
+        viewModel.getComments(title)
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -106,10 +119,11 @@ fun DetailScreen(
 
                 Button(
                     onClick = {
-                        viewModel.postComment()
+                        viewModel.postComment(title)
                     },
 
                     modifier = Modifier.fillMaxWidth(),
+
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF1565FF)
                     )
@@ -127,6 +141,35 @@ fun DetailScreen(
                         text = "Post Comment",
                         color = Color.White
                     )
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                viewModel.commentList.forEach { item ->
+
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp)
+                    ) {
+
+                        Column(
+                            modifier = Modifier.padding(16.dp)
+                        ) {
+
+                            Text(
+                                text = item.username,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF1565FF)
+                            )
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            Text(
+                                text = item.comment
+                            )
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(80.dp))
