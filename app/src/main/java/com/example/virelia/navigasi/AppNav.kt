@@ -42,132 +42,68 @@ fun AppNav() {
     val auth = FirebaseAuth.getInstance()
 
     val startDestination =
-        if (auth.currentUser != null)
-            "home"
-        else
-            "login"
+        if (auth.currentUser != null) "home"
+        else "login"
 
     val items = listOf(
-
-        BottomNavItem(
-            route = "home",
-            title = "Home",
-            icon = Icons.Default.Home
-        ),
-
-        BottomNavItem(
-            route = "explore",
-            title = "Explore",
-            icon = Icons.Default.Search
-        ),
-
-        BottomNavItem(
-            route = "profile",
-            title = "Profile",
-            icon = Icons.Default.Person
-        )
+        BottomNavItem("home", "Home", Icons.Default.Home),
+        BottomNavItem("explore", "Explore", Icons.Default.Search),
+        BottomNavItem("profile", "Profile", Icons.Default.Person)
     )
 
-    val navBackStackEntry by
-    navController.currentBackStackEntryAsState()
-
-    val currentRoute =
-        navBackStackEntry?.destination?.route
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
 
     Scaffold(
-
         bottomBar = {
-
-            // Navbar tidak muncul di login & registrasi
             if (
                 currentRoute != "login" &&
                 currentRoute != "registrasi"
             ) {
-
                 NavigationBar {
-
                     items.forEach { item ->
-
                         NavigationBarItem(
-
-                            selected =
-                                currentRoute == item.route,
-
+                            selected = currentRoute == item.route,
                             onClick = {
-
                                 navController.navigate(item.route) {
-
-                                    popUpTo(
-                                        navController.graph.startDestinationId
-                                    )
-
+                                    popUpTo(navController.graph.startDestinationId)
                                     launchSingleTop = true
                                 }
                             },
-
                             icon = {
-
                                 Icon(
                                     imageVector = item.icon,
                                     contentDescription = item.title
                                 )
                             },
-
-                            label = {
-
-                                Text(item.title)
-                            },
-
-                            colors =
-                                NavigationBarItemDefaults.colors(
-
-                                    selectedIconColor = Color.Blue,
-
-                                    selectedTextColor = Color.Blue,
-
-                                    indicatorColor =
-                                        Color(0xFFE3F2FD),
-
-                                    unselectedIconColor = Color.Gray,
-
-                                    unselectedTextColor = Color.Gray
-                                )
+                            label = { Text(item.title) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Color.Blue,
+                                selectedTextColor = Color.Blue,
+                                indicatorColor = Color(0xFFE3F2FD),
+                                unselectedIconColor = Color.Gray,
+                                unselectedTextColor = Color.Gray
+                            )
                         )
                     }
                 }
             }
         }
-
     ) { paddingValues ->
 
         NavHost(
-
             navController = navController,
-
-            // Pertama buka aplikasi langsung ke login
             startDestination = startDestination,
-
             modifier = Modifier.padding(paddingValues)
-
         ) {
 
             // LOGIN
             composable("login") {
-
                 LoginScreen(
-
-                    onSignUpClick = {
-
-                        navController.navigate("registrasi")
-                    },
-
+                    onSignUpClick = { navController.navigate("registrasi") },
                     onLoginSuccess = {
-
                         navController.navigate("home") {
-
-                            popUpTo("login") {
-                                inclusive = true
-                            }
+                            popUpTo("login") { inclusive = true }
                         }
                     }
                 )
@@ -175,21 +111,11 @@ fun AppNav() {
 
             // REGISTRASI
             composable("registrasi") {
-
                 RegistrasiScreen(
-
-                    onLoginClick = {
-
-                        navController.navigate("login")
-                    },
-
+                    onLoginClick = { navController.navigate("login") },
                     onRegisterSuccess = {
-
                         navController.navigate("login") {
-
-                            popUpTo("registrasi") {
-                                inclusive = true
-                            }
+                            popUpTo("registrasi") { inclusive = true }
                         }
                     }
                 )
@@ -197,41 +123,24 @@ fun AppNav() {
 
             // HOME
             composable("home") {
-
                 HomeScreen(
-
-                    onAddClick = {
-
-                        navController.navigate("create/-1")
-                    },
-
-                    onEditClick = { note ->
-
-                        navController.navigate("create/${note.id}")
-                    }
+                    onAddClick = { navController.navigate("create/-1") },
+                    onEditClick = { note -> navController.navigate("create/${note.id}") }
                 )
             }
 
             // EXPLORE
             composable("explore") {
-
                 ExploreScreen(navController)
             }
 
             // PROFILE
-            // PROFILE
             composable("profile") {
-
                 ProfileScreen(
-
                     onLogout = {
-
                         FirebaseAuth.getInstance().signOut()
-
                         navController.navigate("login") {
-
                             popUpTo(0)
-
                             launchSingleTop = true
                         }
                     }
@@ -240,40 +149,25 @@ fun AppNav() {
 
             // CREATE
             composable("create/{noteId}") { backStackEntry ->
-
-                val noteId =
-                    backStackEntry.arguments
-                        ?.getString("noteId")
-                        ?.toIntOrNull()
-
+                val noteId = backStackEntry.arguments
+                    ?.getString("noteId")
+                    ?.toIntOrNull()
                 CreateScreen(
-
                     noteId = noteId,
-
-                    onBackClick = {
-
-                        navController.popBackStack()
-                    }
+                    onBackClick = { navController.popBackStack() }
                 )
             }
 
-            // DETAIL
+            // DETAIL — TAMBAH firestoreId
             composable(
-                route = "detail/{title}/{desc}/{username}"
+                route = "detail/{firestoreId}/{title}/{desc}/{username}"
             ) { backStackEntry ->
-
                 DetailScreen(
-
                     navController = navController,
-
-                    title = backStackEntry.arguments
-                        ?.getString("title") ?: "",
-
-                    desc = backStackEntry.arguments
-                        ?.getString("desc") ?: "",
-
-                    username = backStackEntry.arguments
-                        ?.getString("username") ?: ""
+                    firestoreId = backStackEntry.arguments?.getString("firestoreId") ?: "",
+                    title = backStackEntry.arguments?.getString("title") ?: "",
+                    desc = backStackEntry.arguments?.getString("desc") ?: "",
+                    username = backStackEntry.arguments?.getString("username") ?: ""
                 )
             }
         }

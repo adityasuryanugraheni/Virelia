@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.ExitToApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,8 +42,17 @@ fun ProfileScreen(
     val profileImageUrl by viewModel.profileImageUrl
     val totalLikes by viewModel.totalLikes
     val totalNotes by viewModel.totalNotes
-    val totalPublic by viewModel.totalPublic       // TAMBAH
+    val totalPublic by viewModel.totalPublic
+    val totalComments by viewModel.totalComments
     val showLogoutDialog by viewModel.showLogoutDialog
+
+    // RELOAD DATA SETIAP BUKA PROFILE
+    LaunchedEffect(Unit) {
+        viewModel.loadTotalComments()
+        viewModel.loadTotalLikes()
+        viewModel.loadTotalNotes()
+        viewModel.loadTotalPublic()
+    }
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -110,7 +120,6 @@ fun ProfileScreen(
                 contentScale = ContentScale.Crop
             )
 
-            // BUTTON EDIT FOTO
             Box(
                 modifier = Modifier
                     .size(32.dp)
@@ -129,7 +138,6 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // USERNAME
         Text(
             text = if (username.isEmpty()) "No Username" else username,
             fontSize = 24.sp,
@@ -138,7 +146,6 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        // EMAIL
         Text(
             text = if (email.isEmpty()) "No Email" else email,
             color = Color.Gray,
@@ -153,9 +160,9 @@ fun ProfileScreen(
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             ProfileStat(totalNotes.toString(), "Notes")
-            ProfileStat(totalPublic.toString(), "Public")  // DIUBAH
+            ProfileStat(totalPublic.toString(), "Public")
             ProfileStat(totalLikes.toString(), "Likes")
-            ProfileStat("1.2k", "Comment")
+            ProfileStat(totalComments.toString(), "Comment")
         }
 
         Spacer(modifier = Modifier.height(40.dp))
@@ -178,10 +185,7 @@ fun ProfileScreen(
                 tint = Color.White
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Logout",
-                color = Color.White
-            )
+            Text(text = "Logout", color = Color.White)
         }
     }
 }

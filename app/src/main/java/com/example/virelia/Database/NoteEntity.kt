@@ -8,15 +8,23 @@ data class NoteEntity(
 
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
+
     val title: String,
+
     val desc: String,
+
     val time: String,
-    // status apakah sudah di share
+
     val isShared: Boolean = false,
+
     val userId: String = "",
+
+    @get:JvmName("getUsernameValue")  // TAMBAH INI
     val username: String = "",
+
     val firestoreId: String = "",
 
     var isLiked: Boolean = false,
+
     var likeCount: Int = 0
 )

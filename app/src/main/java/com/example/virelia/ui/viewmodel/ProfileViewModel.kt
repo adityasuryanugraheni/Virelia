@@ -8,46 +8,40 @@ import androidx.lifecycle.viewModelScope
 import com.example.virelia.Database.DatabaseProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class ProfileViewModel(application: Application) : AndroidViewModel(application) {
 
     private val db = DatabaseProvider.getDatabase(application)
 
-    // LOGOUT DIALOG
     var showLogoutDialog = mutableStateOf(false)
         private set
 
-    // PROFIL
     var profileImageUrl = mutableStateOf("")
         private set
 
-    // USERNAME
     var username = mutableStateOf("")
         private set
 
-    // EMAIL
     var email = mutableStateOf("")
         private set
 
-    // FOTO PROFILE
     var imageUri = mutableStateOf<Uri?>(null)
         private set
 
-    // TOTAL LIKE
     var totalLikes = mutableStateOf(0)
         private set
 
-    // TOTAL NOTES
     var totalNotes = mutableStateOf(0)
         private set
 
-    // TOTAL PUBLIC
     var totalPublic = mutableStateOf(0)
         private set
 
-    // FIREBASE
+    var totalComments = mutableStateOf(0)
+        private set
+
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
 
@@ -56,9 +50,17 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         loadTotalLikes()
         loadTotalNotes()
         loadTotalPublic()
+        loadTotalComments()
     }
 
-    // AMBIL DATA USER
+    // TAMBAH FUNGSI INI
+    fun refresh() {
+        loadTotalLikes()
+        loadTotalNotes()
+        loadTotalPublic()
+        loadTotalComments()
+    }
+
     private fun getUserData() {
         val currentUser = auth.currentUser
         currentUser?.uid?.let { uid ->
@@ -73,22 +75,30 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // HITUNG TOTAL LIKE
     fun loadTotalLikes() {
         val uid = auth.currentUser?.uid ?: return
-        firestore.collection("stories")
-            .whereEqualTo("userId", uid)
-            .get()
-            .addOnSuccessListener { result ->
-                var total = 0
-                for (document in result) {
-                    total += document.getLong("likeCount")?.toInt() ?: 0
-                }
-                totalLikes.value = total
+        viewModelScope.launch {
+            var total = 0
+            val stories = firestore
+                .collection("stories")
+                .whereEqualTo("userId", uid)
+                .get()
+                .await()
+
+            for (story in stories) {
+                val likesSnapshot = firestore
+                    .collection("stories")
+                    .document(story.id)
+                    .collection("likes")
+                    .get()
+                    .await()
+                total += likesSnapshot.size()
             }
+
+            totalLikes.value = total
+        }
     }
 
-    // HITUNG TOTAL NOTES DARI ROOM
     fun loadTotalNotes() {
         val uid = auth.currentUser?.uid ?: return
         viewModelScope.launch {
@@ -96,7 +106,6 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // HITUNG TOTAL PUBLIC DARI ROOM
     fun loadTotalPublic() {
         val uid = auth.currentUser?.uid ?: return
         viewModelScope.launch {
@@ -104,7 +113,30 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // UPDATE FOTO
+    fun loadTotalComments() {
+        val uid = auth.currentUser?.uid ?: return
+        viewModelScope.launch {
+            var total = 0
+            val stories = firestore
+                .collection("stories")
+                .whereEqualTo("userId", uid)
+                .get()
+                .await()
+
+            for (story in stories) {
+                val commentsSnapshot = firestore
+                    .collection("stories")
+                    .document(story.id)
+                    .collection("comments")
+                    .get()
+                    .await()
+                total += commentsSnapshot.size()
+            }
+
+            totalComments.value = total
+        }
+    }
+
     fun updateImage(uri: Uri?) {
         imageUri.value = uri
         val uid = auth.currentUser?.uid ?: return
@@ -116,15 +148,8 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
             }
     }
 
-    // LOGOUT DIALOG
-    fun onLogoutClick() {
-        showLogoutDialog.value = true
-    }
-
-    fun onLogoutDismiss() {
-        showLogoutDialog.value = false
-    }
-
+    fun onLogoutClick() { showLogoutDialog.value = true }
+    fun onLogoutDismiss() { showLogoutDialog.value = false }
     fun onLogoutConfirm(onLogoutSuccess: () -> Unit) {
         auth.signOut()
         showLogoutDialog.value = false

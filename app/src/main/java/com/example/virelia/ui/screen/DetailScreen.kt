@@ -15,30 +15,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.virelia.ui.viewmodel.DetailViewModel
-import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun DetailScreen(
     navController: NavController,
+    firestoreId: String,      // TAMBAH
     title: String,
     desc: String,
     username: String,
     viewModel: DetailViewModel = viewModel()
 ) {
 
-    val currentUser =
-        FirebaseAuth.getInstance().currentUser
-
-    val currentUsername =
-        currentUser?.displayName
-            ?: currentUser?.email
-            ?: "User"
-
-    LaunchedEffect(Unit) {
-        viewModel.getComments(title)
+    LaunchedEffect(firestoreId) {
+        viewModel.getComments(firestoreId)  // GANTI
     }
 
     LazyColumn(
@@ -50,11 +42,11 @@ fun DetailScreen(
 
         item {
             Column {
+
                 // TOP BAR
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-
                     IconButton(onClick = {
                         navController.popBackStack()
                     }) {
@@ -119,16 +111,13 @@ fun DetailScreen(
 
                 Button(
                     onClick = {
-                        viewModel.postComment(title)
+                        viewModel.postComment(firestoreId)  // GANTI
                     },
-
                     modifier = Modifier.fillMaxWidth(),
-
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF1565FF)
                     )
                 ) {
-
                     Icon(
                         imageVector = Icons.Default.Send,
                         contentDescription = null,
@@ -143,20 +132,28 @@ fun DetailScreen(
                     )
                 }
 
+                if (viewModel.message.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = viewModel.message,
+                        color = if (viewModel.message.contains("berhasil"))
+                            Color(0xFF2979FF) else Color.Red,
+                        fontSize = 13.sp
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(20.dp))
 
+                // LIST KOMENTAR
                 viewModel.commentList.forEach { item ->
-
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 6.dp)
                     ) {
-
                         Column(
                             modifier = Modifier.padding(16.dp)
                         ) {
-
                             Text(
                                 text = item.username,
                                 fontWeight = FontWeight.Bold,
@@ -165,9 +162,7 @@ fun DetailScreen(
 
                             Spacer(modifier = Modifier.height(4.dp))
 
-                            Text(
-                                text = item.comment
-                            )
+                            Text(text = item.comment)
                         }
                     }
                 }
