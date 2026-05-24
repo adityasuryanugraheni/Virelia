@@ -5,6 +5,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.messaging.FirebaseMessaging
 
 class LoginViewModel : ViewModel() {
 
@@ -41,6 +43,7 @@ class LoginViewModel : ViewModel() {
             password
         )
             .addOnSuccessListener {
+                saveFcmToken()
 
                 isLoading = false
                 onLoginSuccess()
@@ -52,6 +55,19 @@ class LoginViewModel : ViewModel() {
 
                 errorMessage =
                     exception.message ?: "Login gagal"
+            }
+    }
+    private fun saveFcmToken() {
+        FirebaseMessaging.getInstance().token
+            .addOnSuccessListener { token ->
+
+                val uid = FirebaseAuth.getInstance().currentUser?.uid
+                    ?: return@addOnSuccessListener
+
+                FirebaseFirestore.getInstance()
+                    .collection("users")
+                    .document(uid)
+                    .update("fcmToken", token)
             }
     }
 

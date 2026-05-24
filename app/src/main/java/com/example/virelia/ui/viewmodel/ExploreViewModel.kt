@@ -200,6 +200,7 @@ class ExploreViewModel(application: Application)
         if (index == -1) return
 
         val currentNote = updatedList[index]
+
         val updatedNote = currentNote.copy(
             isLiked = !currentNote.isLiked,
             likeCount = if (currentNote.isLiked)
@@ -211,26 +212,50 @@ class ExploreViewModel(application: Application)
         updatedList[index] = updatedNote
         _publicStories.value = updatedList
 
-        val storyRef = firestore
-            .collection("stories")
-            .document(note.firestoreId)
+        viewModelScope.launch {
 
-        val likesRef = storyRef
-            .collection("likes")
-            .document(currentUserId)
+            val storyRef = firestore
+                .collection("stories")
+                .document(note.firestoreId)
 
-        if (updatedNote.isLiked) {
-            likesRef.set(mapOf("liked" to true))
-            storyRef.update(
-                "likeCount",
-                com.google.firebase.firestore.FieldValue.increment(1)
-            )
-        } else {
-            likesRef.delete()
-            storyRef.update(
-                "likeCount",
-                com.google.firebase.firestore.FieldValue.increment(-1)
-            )
+            val likesRef = storyRef
+                .collection("likes")
+                .document(currentUserId)
+
+            if (updatedNote.isLiked) {
+
+                val userDoc = firestore
+                    .collection("users")
+                    .document(currentUserId)
+                    .get()
+                    .await()
+
+                val username =
+                    userDoc.getString("username") ?: "Unknown"
+
+                likesRef.set(
+                    mapOf(
+                        "userId" to currentUserId,
+                        "username" to username,
+                        "liked" to true,
+                        "time" to System.currentTimeMillis()
+                    )
+                ).await()
+
+                storyRef.update(
+                    "likeCount",
+                    com.google.firebase.firestore.FieldValue.increment(1)
+                ).await()
+
+            } else {
+
+                likesRef.delete().await()
+
+                storyRef.update(
+                    "likeCount",
+                    com.google.firebase.firestore.FieldValue.increment(-1)
+                ).await()
+            }
         }
     }
 }

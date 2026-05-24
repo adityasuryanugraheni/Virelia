@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.example.virelia.data.Comment
+import com.google.firebase.firestore.FieldValue
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
@@ -59,6 +60,11 @@ class DetailViewModel : ViewModel() {
                     .add(data)
                     .await()
 
+                db.collection("stories")
+                    .document(firestoreId)
+                    .update("commentCount", FieldValue.increment(1))
+                    .await()
+
                 message = "Comment berhasil dikirim"
                 comment = ""
                 isLoading = false
@@ -107,6 +113,11 @@ class DetailViewModel : ViewModel() {
                     .collection("comments")
                     .document(docId)
                     .delete()
+                    .await()
+
+                db.collection("stories")
+                    .document(firestoreId)
+                    .update("commentCount", FieldValue.increment(-1))
                     .await()
 
                 getComments(firestoreId)
