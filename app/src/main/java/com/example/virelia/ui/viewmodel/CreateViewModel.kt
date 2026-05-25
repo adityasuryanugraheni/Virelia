@@ -57,6 +57,8 @@ class CreateViewModel(application: Application)
         note: NoteEntity?,
         title: String,
         content: String,
+        imageUrl: String,
+        localImageUri: String,
         onSuccess: () -> Unit
     ) {
 
@@ -79,21 +81,16 @@ class CreateViewModel(application: Application)
             if (note == null) {
 
                 val newNote = NoteEntity(
-
                     title = title,
-
                     desc = content,
-
+                    imageUrl = imageUrl,
+                    localImageUri = localImageUri,
                     time = SimpleDateFormat(
                         "dd MMM yyyy, HH:mm",
                         Locale.getDefault()
                     ).format(Date()),
-
                     userId = userId,
-
-                    // BELUM DISHARE
                     firestoreId = "",
-
                     isShared = false
                 )
 
@@ -107,10 +104,10 @@ class CreateViewModel(application: Application)
                 // UPDATE NOTE
                 // =========================
                 val updatedNote = note.copy(
-
                     title = title,
-
-                    desc = content
+                    desc = content,
+                    imageUrl = imageUrl,
+                    localImageUri = localImageUri
                 )
 
                 // UPDATE ROOM
@@ -125,17 +122,12 @@ class CreateViewModel(application: Application)
                 ) {
 
                     val noteData = hashMapOf(
-
                         "title" to title,
-
                         "desc" to content,
-
+                        "imageUrl" to imageUrl, // ✅ TAMBAH INI
                         "time" to updatedNote.time,
-
                         "userId" to updatedNote.userId,
-
                         "likeCount" to updatedNote.likeCount,
-
                         "commentCount" to updatedNote.commentCount
                     )
 

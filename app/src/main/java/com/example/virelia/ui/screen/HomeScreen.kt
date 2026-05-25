@@ -34,6 +34,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import com.example.virelia.ui.viewmodel.HomeViewModel
 import androidx.compose.foundation.BorderStroke
+import android.text.Html
 
 @Composable
 fun HomeScreen(
@@ -208,7 +209,13 @@ fun NoteCard(
             Spacer(modifier = Modifier.height(10.dp))
 
             Text(
-                text = note.desc,
+                text = Html
+                    .fromHtml(
+                        note.desc,
+                        Html.FROM_HTML_MODE_COMPACT
+                    )
+                    .toString(),
+
                 color = Color.Gray
             )
 

@@ -160,14 +160,15 @@ fun AppNav() {
 
             // DETAIL — TAMBAH firestoreId
             composable(
-                route = "detail/{firestoreId}/{title}/{desc}/{username}"
+                route = "detail/{firestoreId}/{title}/{desc}/{username}/{imageUrl}"
             ) { backStackEntry ->
                 DetailScreen(
                     navController = navController,
                     firestoreId = backStackEntry.arguments?.getString("firestoreId") ?: "",
                     title = backStackEntry.arguments?.getString("title") ?: "",
                     desc = backStackEntry.arguments?.getString("desc") ?: "",
-                    username = backStackEntry.arguments?.getString("username") ?: ""
+                    username = backStackEntry.arguments?.getString("username") ?: "",
+                    imageUrl = backStackEntry.arguments?.getString("imageUrl") ?: ""
                 )
             }
         }

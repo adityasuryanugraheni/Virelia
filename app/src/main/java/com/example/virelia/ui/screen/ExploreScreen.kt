@@ -239,7 +239,13 @@ fun ExploreNoteCard(
             Spacer(modifier = Modifier.height(10.dp))
 
             Text(
-                text = desc,
+                text = android.text.Html
+                    .fromHtml(
+                        desc,
+                        android.text.Html.FROM_HTML_MODE_COMPACT
+                    )
+                    .toString(),
+
                 fontSize = 14.sp,
                 lineHeight = 20.sp,
                 color = Color.Gray

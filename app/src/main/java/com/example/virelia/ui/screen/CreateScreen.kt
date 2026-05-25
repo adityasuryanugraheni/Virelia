@@ -32,6 +32,7 @@ import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.foundation.text.BasicTextField
+import com.google.firebase.storage.FirebaseStorage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,6 +74,14 @@ fun CreateScreen(
         mutableStateOf(false)
     }
 
+    var selectedImageUri by remember {
+        mutableStateOf<Uri?>(null)
+    }
+
+    var imageUrl by remember {
+        mutableStateOf("")
+    }
+
     // =========================
     // SET DATA EDIT
     // =========================
@@ -82,14 +91,29 @@ fun CreateScreen(
 
             title = it.title
             state.setHtml(it.desc)
+            imageUrl = it.imageUrl
+
+            selectedImageUri =
+                if (it.localImageUri.isNotEmpty())
+                    Uri.parse(it.localImageUri)
+                else
+                    null
         }
     }
 
     // =========================
     // IMAGE PICKER
     // =========================
-    var selectedImageUri by remember {
-        mutableStateOf<Uri?>(null)
+    fun uploadGambar(uri: Uri, onSuccess: (String) -> Unit) {
+        val ref = FirebaseStorage.getInstance().reference
+            .child("catatan/${System.currentTimeMillis()}.jpg")
+
+        ref.putFile(uri)
+            .addOnSuccessListener {
+                ref.downloadUrl.addOnSuccessListener { url ->
+                    onSuccess(url.toString())
+                }
+            }
     }
 
     val imageLauncher =
@@ -99,7 +123,6 @@ fun CreateScreen(
                 ActivityResultContracts.GetContent()
 
         ) { uri ->
-
             selectedImageUri = uri
         }
 
@@ -164,15 +187,13 @@ fun CreateScreen(
 
                             // SAVE NOTE
                             viewModel.saveNote(
-
                                 note = note,
-
                                 title = title,
-
                                 content = state.toHtml(),
-
+                                imageUrl = imageUrl,
+                                localImageUri =
+                                    selectedImageUri?.toString() ?: "",
                                 onSuccess = {
-
                                     onBackClick()
                                 }
                             )
@@ -379,7 +400,7 @@ fun CreateScreen(
 
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 300.dp)
+                    .heightIn(min = 120.dp)
             ) {
 
                 BasicRichTextEditor(
@@ -424,33 +445,41 @@ fun CreateScreen(
                 }
             }
 
-                // =========================
-                // IMAGE PREVIEW
-                // =========================
-                selectedImageUri?.let { uri ->
+            // =========================
+// IMAGE PREVIEW
+// =========================
 
-                    Image(
+            if (
+                selectedImageUri != null ||
+                note?.localImageUri?.isNotEmpty() == true ||
+                imageUrl.isNotEmpty()
+            ) {
 
-                        painter =
-                            rememberAsyncImagePainter(uri),
+                Image(
 
-                        contentDescription = null,
+                    painter = rememberAsyncImagePainter(
+                        model =
+                            selectedImageUri
+                                ?: note?.localImageUri
+                                ?: imageUrl
+                    ),
 
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(220.dp)
-                            .clip(
-                                RoundedCornerShape(20.dp)
-                            ),
+                    contentDescription = null,
 
-                        contentScale =
-                            ContentScale.Crop
-                    )
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(220.dp)
+                        .clip(
+                            RoundedCornerShape(20.dp)
+                        ),
 
-                    Spacer(
-                        modifier = Modifier.height(20.dp)
-                    )
-                }
+                    contentScale = ContentScale.Crop
+                )
+
+                Spacer(
+                    modifier = Modifier.height(20.dp)
+                )
+            }
 
                 Spacer(
                     modifier = Modifier.height(100.dp)

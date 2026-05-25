@@ -13,6 +13,10 @@ data class NoteEntity(
 
     val desc: String,
 
+    val localImageUri: String = "",
+
+    val imageUrl: String = "",
+
     val time: String,
 
     val isShared: Boolean = false,

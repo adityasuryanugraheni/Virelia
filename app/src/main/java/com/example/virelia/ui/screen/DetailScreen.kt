@@ -21,6 +21,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.virelia.data.Comment
 import com.example.virelia.ui.viewmodel.DetailViewModel
+import coil.compose.rememberAsyncImagePainter
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
 
 @Composable
 fun DetailScreen(
@@ -29,8 +32,9 @@ fun DetailScreen(
     title: String,
     desc: String,
     username: String,
-    viewModel: DetailViewModel = viewModel()
+    imageUrl: String // ✅ TAMBAH INI
 ) {
+    val viewModel: DetailViewModel = viewModel()
 
     LaunchedEffect(firestoreId) {
         viewModel.getComments(firestoreId)
@@ -85,6 +89,19 @@ fun DetailScreen(
                     lineHeight = 24.sp,
                     color = Color.DarkGray
                 )
+
+                if (imageUrl.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Image(
+                        painter = rememberAsyncImagePainter(imageUrl),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                        contentScale = ContentScale.Crop
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
