@@ -24,6 +24,7 @@ import com.example.virelia.ui.viewmodel.DetailViewModel
 import coil.compose.rememberAsyncImagePainter
 import androidx.compose.foundation.Image
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.draw.clip
 
 @Composable
 fun DetailScreen(
@@ -104,8 +105,9 @@ fun DetailScreen(
                         contentDescription = null,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(200.dp),
-                        contentScale = ContentScale.Crop
+                            .height(500.dp)
+                            .clip(RoundedCornerShape(20.dp)),
+                        contentScale = ContentScale.Fit
                     )
                 }
 

@@ -58,16 +58,43 @@ class LoginViewModel : ViewModel() {
             }
     }
     private fun saveFcmToken() {
+
         FirebaseMessaging.getInstance().token
             .addOnSuccessListener { token ->
 
-                val uid = FirebaseAuth.getInstance().currentUser?.uid
+                android.util.Log.d("FCM_TOKEN", token)
+
+                val uid = FirebaseAuth
+                    .getInstance()
+                    .currentUser
+                    ?.uid
                     ?: return@addOnSuccessListener
 
                 FirebaseFirestore.getInstance()
                     .collection("users")
                     .document(uid)
                     .update("fcmToken", token)
+                    .addOnSuccessListener {
+
+                        android.util.Log.d(
+                            "FCM_TOKEN",
+                            "Token berhasil disimpan"
+                        )
+                    }
+                    .addOnFailureListener {
+
+                        android.util.Log.e(
+                            "FCM_TOKEN",
+                            "Gagal simpan token"
+                        )
+                    }
+            }
+            .addOnFailureListener {
+
+                android.util.Log.e(
+                    "FCM_TOKEN",
+                    "Gagal mengambil token"
+                )
             }
     }
 

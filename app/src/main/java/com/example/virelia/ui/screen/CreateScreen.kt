@@ -33,6 +33,8 @@ import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.foundation.text.BasicTextField
 import com.google.firebase.storage.FirebaseStorage
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,6 +84,10 @@ fun CreateScreen(
         mutableStateOf("")
     }
 
+    var showDeleteImageDialog by remember {
+        mutableStateOf(false)
+    }
+
     // =========================
     // SET DATA EDIT
     // =========================
@@ -93,11 +99,7 @@ fun CreateScreen(
             state.setHtml(it.desc)
             imageUrl = it.imageUrl
 
-            selectedImageUri =
-                if (it.localImageUri.isNotEmpty())
-                    Uri.parse(it.localImageUri)
-                else
-                    null
+            selectedImageUri = null
         }
     }
 
@@ -193,7 +195,12 @@ fun CreateScreen(
                                     viewModel.saveNote(
                                         note = note,
                                         title = title,
-                                        content = state.toHtml(),
+                                        content = android.text.Html
+                                            .fromHtml(
+                                                state.toHtml(),
+                                                android.text.Html.FROM_HTML_MODE_COMPACT
+                                            )
+                                            .toString(),
                                         imageUrl = uploadedUrl,
                                         localImageUri = selectedImageUri.toString(),
                                         onSuccess = {
@@ -207,7 +214,12 @@ fun CreateScreen(
                                 viewModel.saveNote(
                                     note = note,
                                     title = title,
-                                    content = state.toHtml(),
+                                    content = android.text.Html
+                                        .fromHtml(
+                                            state.toHtml(),
+                                            android.text.Html.FROM_HTML_MODE_COMPACT
+                                        )
+                                        .toString(),
                                     imageUrl = imageUrl,
                                     localImageUri = "",
                                     onSuccess = {
@@ -469,39 +481,92 @@ fun CreateScreen(
 
             if (
                 selectedImageUri != null ||
-                note?.localImageUri?.isNotEmpty() == true ||
                 imageUrl.isNotEmpty()
             ) {
 
-                Image(
+                Box {
 
-                    painter = rememberAsyncImagePainter(
-                        model =
-                            selectedImageUri
-                                ?: note?.localImageUri
-                                ?: imageUrl
-                    ),
+                    Image(
 
-                    contentDescription = null,
-
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(220.dp)
-                        .clip(
-                            RoundedCornerShape(20.dp)
+                        painter = rememberAsyncImagePainter(
+                            model =
+                                selectedImageUri ?: imageUrl
                         ),
 
-                    contentScale = ContentScale.Crop
-                )
+                        contentDescription = null,
+
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 180.dp)
+                            .clip(
+                                RoundedCornerShape(20.dp)
+                            )
+                            .pointerInput(Unit) {
+                                detectTapGestures(
+                                    onLongPress = {
+                                        showDeleteImageDialog = true
+                                    }
+                                )
+                            },
+
+                        contentScale = ContentScale.FillWidth
+                    )
+                }
 
                 Spacer(
                     modifier = Modifier.height(20.dp)
                 )
-            }
 
-                Spacer(
-                    modifier = Modifier.height(100.dp)
-                )
+                if (showDeleteImageDialog) {
+
+                    AlertDialog(
+
+                        onDismissRequest = {
+                            showDeleteImageDialog = false
+                        },
+
+                        title = {
+                            Text("Delete Image")
+                        },
+
+                        text = {
+                            Text("Do you want to remove this image?")
+                        },
+
+                        confirmButton = {
+
+                            TextButton(
+
+                                onClick = {
+
+                                    selectedImageUri = null
+                                    imageUrl = ""
+
+                                    showDeleteImageDialog = false
+                                }
+                            ) {
+
+                                Text(
+                                    "Delete",
+                                    color = Color.Red
+                                )
+                            }
+                        },
+
+                        dismissButton = {
+
+                            TextButton(
+                                onClick = {
+                                    showDeleteImageDialog = false
+                                }
+                            ) {
+
+                                Text("Cancel")
+                            }
+                        }
+                    )
+                }
             }
         }
     }
+}

@@ -75,6 +75,12 @@ class CreateViewModel(application: Application)
                     .currentUser
                     ?.uid ?: ""
 
+            val username =
+                FirebaseAuth
+                    .getInstance()
+                    .currentUser
+                    ?.displayName ?: "Unknown"
+
             // =========================
             // CREATE NOTE
             // =========================
@@ -127,6 +133,7 @@ class CreateViewModel(application: Application)
                         "imageUrl" to imageUrl, // ✅ TAMBAH INI
                         "time" to updatedNote.time,
                         "userId" to updatedNote.userId,
+                        "username" to username,
                         "likeCount" to updatedNote.likeCount,
                         "commentCount" to updatedNote.commentCount
                     )
