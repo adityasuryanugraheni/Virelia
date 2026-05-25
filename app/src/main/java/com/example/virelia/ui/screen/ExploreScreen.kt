@@ -124,9 +124,13 @@ fun ExploreScreen(
                             val encodedUsername = URLEncoder.encode(
                                 note.username, "UTF-8"
                             ).replace("+", "%20")
+                            val encodedImageUrl = URLEncoder.encode(
+                                note.imageUrl,
+                                "UTF-8"
+                            ).replace("+", "%20")
 
                             navController.navigate(
-                                "detail/$encodedFirestoreId/$encodedTitle/$encodedDesc/$encodedUsername"
+                                "detail/$encodedFirestoreId/$encodedTitle/$encodedDesc/$encodedUsername/$encodedImageUrl"
                             )
                         }
                     )
@@ -199,8 +203,13 @@ fun ExploreNoteCard(
                     username, "UTF-8"
                 ).replace("+", "%20")
 
+                val encodedImageUrl = URLEncoder.encode(
+                    note.imageUrl,
+                    "UTF-8"
+                ).replace("+", "%20")
+
                 navController.navigate(
-                    "detail/$encodedFirestoreId/$encodedTitle/$encodedDesc/$encodedUsername"
+                    "detail/$encodedFirestoreId/$encodedTitle/$encodedDesc/$encodedUsername/$encodedImageUrl"
                 )
             },
         shape = RoundedCornerShape(24.dp),

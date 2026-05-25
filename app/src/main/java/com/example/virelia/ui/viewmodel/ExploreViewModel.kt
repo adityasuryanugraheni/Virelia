@@ -83,6 +83,7 @@ class ExploreViewModel(application: Application)
                             desc = document.getString("desc") ?: "",
                             time = document.getString("time") ?: "",
                             userId = document.getString("userId") ?: "",
+                            imageUrl = document.getString("imageUrl") ?: "",
                             username = document.getString("username") ?: "Unknown",
                             firestoreId = firestoreId,
                             isShared = true,

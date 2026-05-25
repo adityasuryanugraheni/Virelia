@@ -186,17 +186,35 @@ fun CreateScreen(
                             }
 
                             // SAVE NOTE
-                            viewModel.saveNote(
-                                note = note,
-                                title = title,
-                                content = state.toHtml(),
-                                imageUrl = imageUrl,
-                                localImageUri =
-                                    selectedImageUri?.toString() ?: "",
-                                onSuccess = {
-                                    onBackClick()
+                            if (selectedImageUri != null) {
+
+                                uploadGambar(selectedImageUri!!) { uploadedUrl ->
+
+                                    viewModel.saveNote(
+                                        note = note,
+                                        title = title,
+                                        content = state.toHtml(),
+                                        imageUrl = uploadedUrl,
+                                        localImageUri = selectedImageUri.toString(),
+                                        onSuccess = {
+                                            onBackClick()
+                                        }
+                                    )
                                 }
-                            )
+
+                            } else {
+
+                                viewModel.saveNote(
+                                    note = note,
+                                    title = title,
+                                    content = state.toHtml(),
+                                    imageUrl = imageUrl,
+                                    localImageUri = "",
+                                    onSuccess = {
+                                        onBackClick()
+                                    }
+                                )
+                            }
                         }
                     ) {
 

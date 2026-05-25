@@ -85,7 +85,13 @@ fun DetailScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = desc,
+                    text = android.text.Html
+                        .fromHtml(
+                            desc,
+                            android.text.Html.FROM_HTML_MODE_COMPACT
+                        )
+                        .toString(),
+
                     lineHeight = 24.sp,
                     color = Color.DarkGray
                 )

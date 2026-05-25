@@ -66,6 +66,7 @@ class HomeViewModel(application: Application)
                     "time" to note.time,
                     "userId" to currentUserId,
                     "username" to username,
+                    "imageUrl" to note.imageUrl,
                     "likeCount" to note.likeCount,
                     "commentCount" to note.commentCount
                 )
@@ -153,6 +154,7 @@ class HomeViewModel(application: Application)
                         time = document.getString("time") ?: "",
                         userId = document.getString("userId") ?: "",
                         username = document.getString("username") ?: "",
+                        imageUrl = document.getString("imageUrl") ?: "",
                         firestoreId = firestoreId,
                         isShared = true,
                         likeCount = likeCount,
