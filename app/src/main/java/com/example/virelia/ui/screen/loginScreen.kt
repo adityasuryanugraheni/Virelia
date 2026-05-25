@@ -29,6 +29,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.virelia.ui.viewmodel.LoginViewModel
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import android.app.Activity
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun LoginScreen(
@@ -37,6 +44,8 @@ fun LoginScreen(
     viewModel: LoginViewModel = viewModel()
 ) {
     val focusManager = LocalFocusManager.current
+    val context = LocalContext.current
+    val activity = context as Activity
 
     Column(
         modifier = Modifier
@@ -193,7 +202,25 @@ fun LoginScreen(
 
                 Button(
                     onClick = {
-                        viewModel.login(onLoginSuccess)
+                        viewModel.login{
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+
+                                if (
+                                    ContextCompat.checkSelfPermission(
+                                        context,
+                                        Manifest.permission.POST_NOTIFICATIONS
+                                    ) != PackageManager.PERMISSION_GRANTED
+                                ) {
+
+                                    ActivityCompat.requestPermissions(
+                                        activity,
+                                        arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                                        1001
+                                    )
+                                }
+                            }
+                            onLoginSuccess()
+                        }
                     },
 
                     modifier = Modifier

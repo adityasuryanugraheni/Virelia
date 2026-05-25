@@ -46,6 +46,19 @@ fun HomeScreen(
     val context = LocalContext.current
     val notes by viewModel.notes.collectAsState()
 
+    var searchText by rememberSaveable {
+        mutableStateOf("")
+    }
+
+    // FILTER NOTES
+    val filteredNotes = notes.filter {
+        it.title.contains(searchText, ignoreCase = true) ||
+                Html.fromHtml(
+                    it.desc,
+                    Html.FROM_HTML_MODE_COMPACT
+                ).toString().contains(searchText, ignoreCase = true)
+    }
+
     val lifecycleOwner = LocalLifecycleOwner.current
     val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
 
@@ -85,7 +98,12 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            SearchBar()
+            SearchBar(
+                text = searchText,
+                onTextChange = {
+                    searchText = it
+                }
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -101,7 +119,7 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
 
-                items(notes) { note ->
+                items(filteredNotes) { note ->
                     NoteCard(
                         note = note,
                         onEditClick = { onEditClick(note) },
@@ -118,13 +136,14 @@ fun HomeScreen(
 }
 
 @Composable
-fun SearchBar() {
-
-    var text by remember { mutableStateOf("") }
+fun SearchBar(
+    text: String,
+    onTextChange: (String) -> Unit
+) {
 
     OutlinedTextField(
         value = text,
-        onValueChange = { text = it },
+        onValueChange = onTextChange,
         modifier = Modifier.fillMaxWidth(),
         placeholder = {
             Text(
