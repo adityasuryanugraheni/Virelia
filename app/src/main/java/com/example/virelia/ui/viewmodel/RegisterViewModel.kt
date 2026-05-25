@@ -73,7 +73,7 @@ class RegisterViewModel(
         if (password.length < 6) {
 
             errorMessage.value =
-                "Password minimal 6 karakter"
+                "Password minimum 6 characters"
 
             return
         }

@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.virelia.Database.DatabaseProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
@@ -70,7 +71,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 .addOnSuccessListener { document ->
                     username.value = document.getString("username") ?: "No Username"
                     email.value = document.getString("email") ?: "No Email"
-                    profileImageUrl.value = document.getString("profileImage") ?: ""
+                    profileImageUrl.value = document.getString("photoUrl") ?: ""
                 }
         }
     }
@@ -138,15 +139,40 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun updateImage(uri: Uri?) {
-        imageUri.value = uri
-        val uid = auth.currentUser?.uid ?: return
-        firestore.collection("users")
-            .document(uid)
-            .update("profileImage", uri.toString())
+        if (uri == null) return
+
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        val ref = FirebaseStorage.getInstance().reference
+            .child("profile/${System.currentTimeMillis()}.jpg")
+
+        ref.putFile(uri)
             .addOnSuccessListener {
-                profileImageUrl.value = uri.toString()
+                ref.downloadUrl.addOnSuccessListener { url ->
+
+                    val imageUrl = url.toString()
+
+                    // ✅ SIMPAN KE FIRESTORE
+                    FirebaseFirestore.getInstance()
+                        .collection("users")
+                        .document(userId)
+                        .update("photoUrl", imageUrl)
+
+                    // ✅ UPDATE STATE BIAR LANGSUNG KEGANTI
+                    profileImageUrl.value = imageUrl
+                }
             }
     }
+//    fun updateImage(uri: Uri?) {
+//        imageUri.value = uri
+//        val uid = auth.currentUser?.uid ?: return
+//        firestore.collection("users")
+//            .document(uid)
+//            .update("profileImage", uri.toString())
+//            .addOnSuccessListener {
+//                profileImageUrl.value = uri.toString()
+//            }
+//    }
 
     fun onLogoutClick() { showLogoutDialog.value = true }
     fun onLogoutDismiss() { showLogoutDialog.value = false }

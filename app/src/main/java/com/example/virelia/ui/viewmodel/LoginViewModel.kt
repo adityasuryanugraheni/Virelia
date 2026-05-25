@@ -31,7 +31,7 @@ class LoginViewModel : ViewModel() {
         ) {
 
             errorMessage =
-                "Email dan password wajib diisi"
+                "Email and password are required"
 
             return
         }

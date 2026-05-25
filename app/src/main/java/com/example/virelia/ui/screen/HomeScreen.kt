@@ -250,14 +250,14 @@ fun NoteCard(
                                 onSuccess = {
                                     Toast.makeText(
                                         context,
-                                        "Story berhasil di share",
+                                        "Story alredy to shared",
                                         Toast.LENGTH_SHORT
                                     ).show()
                                 },
                                 onFailed = {
                                     Toast.makeText(
                                         context,
-                                        "Gagal share",
+                                        "failed to share",
                                         Toast.LENGTH_SHORT
                                     ).show()
                                 }
@@ -265,7 +265,7 @@ fun NoteCard(
                         } else {
                             Toast.makeText(
                                 context,
-                                "Tidak ada internet",
+                                "No internet",
                                 Toast.LENGTH_SHORT
                             ).show()
                         }

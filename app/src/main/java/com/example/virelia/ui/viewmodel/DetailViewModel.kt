@@ -65,7 +65,7 @@ class DetailViewModel : ViewModel() {
                     .update("commentCount", FieldValue.increment(1))
                     .await()
 
-                message = "Comment berhasil dikirim"
+                message = "Comment sent successfully"
                 comment = ""
                 isLoading = false
                 getComments(firestoreId)
